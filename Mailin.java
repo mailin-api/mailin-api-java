@@ -342,6 +342,14 @@ public String campaign_share_link(int [] campaign_ids) {
     return post("campaign/sharelink", json);
 }
 
+public String update_campaign_status(int id, String status) {
+    Map < String, Object > map = new HashMap < String, Object > ();
+    map.put("status", status);
+    Gson gson = new Gson();
+    String json = gson.toJson(map);
+    return put("campaign/" + id + "/updatecampstatus", json);
+}
+
 public String get_process(int id) {
     return get("process/" + id, "");
 }
