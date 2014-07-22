@@ -199,12 +199,12 @@ public String send_bat_sms(String campid, String mobilephone) {
     return get("sms/" + campid+"/"+mobilephone, "");
 }
 
-public String get_campaigns(String type) {
+public String get_campaigns(String type, String status, String page, String page_limit) {
     String url = "";
-    if (type == "") {
-    	url = "campaign/";
+    if (type == "" && status == "" && page == "" && page_limit == "") {
+        url = "campaign/";
     } else {
-    	url = "campaign/type/"+type+"/";
+        url = "campaign/type/" + type + "/status/" + status + "/page/" + page + "/page_limit/" + page_limit + "/";
     }
     return get(url,"");
 }
