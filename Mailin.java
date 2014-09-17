@@ -520,13 +520,14 @@ public String export_users(String export_attrib, String filter, String notify_ur
     return post("user/export", json);
 }
 
-public String create_update_user(String email, Object attributes, int blacklisted, int [] listid, int [] listid_unlink) {
+public String create_update_user(String email, Object attributes, int blacklisted, int [] listid, int [] listid_unlink, int blacklisted_sms) {
     Map < String, Object > map = new HashMap < String, Object > ();
     map.put("email", email);
     map.put("attributes", attributes);
     map.put("blacklisted", blacklisted);
     map.put("listid", listid);
     map.put("listid_unlink", listid_unlink);
+    map.put("blacklisted_sms", blacklisted_sms);
     Gson gson = new Gson();
     String json = gson.toJson(map);
     return post("user/createdituser", json);
