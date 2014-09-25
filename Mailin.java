@@ -109,6 +109,10 @@ public String get_account() {
     return get("account", "");
 }
 
+public String get_smtp_details() {
+    return get("account/smtpdetail", "");
+}
+
 public String create_child_account(String email, String password, String company_org, String first_name, String last_name, Object credits) {
     Map < String, Object > map = new HashMap < String, Object > ();
     map.put("child_email", email);
