@@ -6,6 +6,8 @@ tutorial.java
 
 ## Available functions
 
+List of API calls that you can make, you can click to read more about it. Please do note that the order of parameters are important.
+
 ### Campaign calls
 
  * [get_account](https://apidocs.sendinblue.com/account/)() - Get your account information
@@ -37,6 +39,7 @@ tutorial.java
  * [create_list](https://apidocs.sendinblue.com/list/#3)(list_name,list_parent) - Create a list
  * [delete_list](https://apidocs.sendinblue.com/list/#4)(id) - Delete a list
  * [update_list](https://apidocs.sendinblue.com/list/#5)(id,list_name,list_parent) - Updating a list
+ * [display_list_users](https://apidocs.sendinblue.com/list/#8)(listids,page,page_limit) - Display details of all users for the given lists
  * [add_users_list](https://apidocs.sendinblue.com/list/#6)(id,users) - Add users to a list
  * [delete_users_list](https://apidocs.sendinblue.com/list/#7)(id,users) - Delete users from a list
  * [get_attributes](https://apidocs.sendinblue.com/attribute/#1)() - Listing all attributes

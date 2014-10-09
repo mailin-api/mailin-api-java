@@ -1,18 +1,18 @@
-# SendinBlue Java API
+# SendinBlue Java Library
 
-You will need to install the following module
+This is the official SendinBlue Java API wrapper. You will need to install the following module
 * gson
 
 ## Quickstart
 
-1. You will need to first get the Access key and Secret key from [SendinBlue](https://www.sendinblue.com).
+1. You will need to first get the Access key from [SendinBlue](https://www.sendinblue.com).
 
 2. Assuming that you have cloned this git repo. You can use this small sample script to get started
 ```java
 import java.util.*;
 public class JavaAPI {
 	public static void main(String[] args) {
-		Mailin http = new Mailin("https://api.sendinblue.com/v1.0","<your access key>","<your secret key>"); 
+		Mailin http = new Mailin("https://api.sendinblue.com/v2.0","<your access key>"); 
 		String str = http.get_account();
 		System.out.println(str);
 	}
@@ -21,6 +21,8 @@ public class JavaAPI {
 3. To explore more, you should visit the [SendinBlue API documentation](https://apidocs.sendinblue.com).
 
 ## Available functions
+
+List of API calls that you can make, you can click to read more about it. Please do note that the order of parameters are important.
 
 ### Campaign calls
 
@@ -53,6 +55,7 @@ public class JavaAPI {
  * [create_list](https://apidocs.sendinblue.com/list/#3)(list_name,list_parent) - Create a list
  * [delete_list](https://apidocs.sendinblue.com/list/#4)(id) - Delete a list
  * [update_list](https://apidocs.sendinblue.com/list/#5)(id,list_name,list_parent) - Updating a list
+ * [display_list_users](https://apidocs.sendinblue.com/list/#8)(listids,page,page_limit) - Display details of all users for the given lists
  * [add_users_list](https://apidocs.sendinblue.com/list/#6)(id,users) - Add users to a list
  * [delete_users_list](https://apidocs.sendinblue.com/list/#7)(id,users) - Delete users from a list
  * [get_attributes](https://apidocs.sendinblue.com/attribute/#1)() - Listing all attributes
