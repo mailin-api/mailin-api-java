@@ -22,11 +22,13 @@ public class Mailin {
     public String do_request(String resource, String method, String input) throws Exception {
         String url = base_url + "/" + resource;
         String key = api_key;
-        
+        String content_header = "application/json";
+
         URL obj = new URL(url);
         HttpURLConnection con = (HttpURLConnection) obj.openConnection();
          
         con.setRequestProperty("api-key", key);
+        con.setRequestProperty("Content-Type", content_header);
 		con.setDoOutput(true);
 		con.setDoInput(true);
 		con.setRequestMethod(method);

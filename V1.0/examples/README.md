@@ -1,8 +1,6 @@
 # Examples
 
-This is the example to get you started
-
-tutorial.java
+tutorial.java - Sending a transactional email
 
 ## Available functions
 List of API calls that you can make. Please do note that the order of parameters are important.

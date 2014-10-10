@@ -1,8 +1,6 @@
 # Examples
 
-This is the example to get you started
-
-tutorial.java
+tutorial.java - Sending a transactional email
 
 ## Available functions
 
