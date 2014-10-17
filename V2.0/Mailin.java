@@ -126,12 +126,12 @@ public class Mailin {
         return delete("account/" + child_authkey, "");
     }
 
-    public String get_child_account(String child_authkey) {
+    public String get_reseller_child(String child_authkey) {
         Map < String, String > map = new HashMap < String, String > ();
         map.put("auth_key", child_authkey);
         Gson gson = new Gson();
         String json = gson.toJson(map);
-        return post("account/getchild", json);
+        return post("account/getchildv2", json);
     }
 
     public String add_remove_child_credits(String child_authkey, Object add_credits, Object remove_credits) {
@@ -189,18 +189,18 @@ public class Mailin {
         return get("sms/" + campid+"/"+mobilephone, "");
     }
 
-    public String get_campaigns(String type, String status, String page, String page_limit) {
+    public String get_campaigns_v2(String type, String status, String page, String page_limit) {
         String url = "";
         if (type == "" && status == "" && page == "" && page_limit == "") {
-            url = "campaign/";
+            url = "campaign/detailsv2/";
         } else {
-            url = "campaign/type/" + type + "/status/" + status + "/page/" + page + "/page_limit/" + page_limit + "/";
+            url = "campaign/detailsv2/type/" + type + "/status/" + status + "/page/" + page + "/page_limit/" + page_limit + "/";
         }
         return get(url,"");
     }
 
-    public String get_campaign(int id) {
-        return get("campaign/" + id, "");
+    public String get_campaign_v2(int id) {
+        return get("campaign/" + id + "/detailsv2/", "");
     }
 
     public String create_campaign(String category, String from_name, String name, String bat_sent, String html_content, String html_url, int [] listid, String scheduled_date, String subject, String from_email, String reply_to, String to_field, int [] exclude_list) {
@@ -324,12 +324,12 @@ public class Mailin {
         return put("campaign/" + id, json);
     }
 
-    public String campaign_share_link(int [] campaign_ids) {
+    public String share_campaign(int [] campaign_ids) {
         Map < String, Object > map = new HashMap < String, Object > ();
         map.put("camp_ids", campaign_ids);
         Gson gson = new Gson();
         String json = gson.toJson(map);
-        return post("campaign/sharelink", json);
+        return post("campaign/sharelinkv2", json);
     }
 
     public String update_campaign_status(int id, String status) {
