@@ -227,8 +227,13 @@ public class Mailin {
         return delete("campaign/" + id, "");
     }
 
-    public String get_processes() {
-        return get("process", "");
+    public String get_processes(int page, int page_limit) {
+        Map < String, Object > map = new HashMap < String, Object > ();
+        map.put("page", page);
+        map.put("page_limit", page_limit);
+        Gson gson = new Gson();
+        String json = gson.toJson(map);
+        return get("process", json);
     }
 
     public String update_campaign(int id, String category, String from_name, String name, String bat_sent, String html_content, String html_url, int [] listid, String scheduled_date, String subject, String from_email, String reply_to, String to_field, int [] exclude_list) {
@@ -344,8 +349,13 @@ public class Mailin {
         return get("process/" + id, "");
     }
 
-    public String get_lists() {
-        return get("list", "");
+    public String get_lists(int page, int page_limit) {
+        Map < String, Object > map = new HashMap < String, Object > ();
+        map.put("page", page);
+        map.put("page_limit", page_limit);
+        Gson gson = new Gson();
+        String json = gson.toJson(map);
+        return get("list", json);
     }
 
     public String get_list(int id) {
@@ -562,8 +572,13 @@ public class Mailin {
         return post("report", json);
     }
 
-    public String get_folders() {
-        return get("folder", "");
+    public String get_folders(int page, int page_limit) {
+        Map < String, Object > map = new HashMap < String, Object > ();
+        map.put("page", page);
+        map.put("page_limit", page_limit);
+        Gson gson = new Gson();
+        String json = gson.toJson(map);
+        return get("folder", json);
     }
 
     public String get_folder(int id) {
