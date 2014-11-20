@@ -427,18 +427,26 @@ public class Mailin {
         return post("email", json);
     }
 
-    public String get_webhooks() {
-        return get("webhook", "");
+    public String get_webhooks(String is_plat) {
+        String url = "";
+        if (is_plat == "") {
+            url = "webhook/";
+        } else {
+            url = "webhook/is_plat/"+is_plat+"/";
+        }
+        return get(url, "");
     }
+
     public String get_webhook(int id) {
         return get("webhook/" + id, "");
     }
 
-    public String create_webhook(String url, String description, String [] events) {
+    public String create_webhook(String url, String description, String [] events, int is_plat) {
         Map < String, Object > map = new HashMap < String, Object > ();
         map.put("url", url);
         map.put("description", description);
         map.put("events", events);
+        map.put("is_plat", is_plat);
         Gson gson = new Gson();
         String json = gson.toJson(map);
         return post("webhook", json);
