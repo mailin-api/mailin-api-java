@@ -48,10 +48,12 @@ public class Mailin {
 		con.setUseCaches(false);
 		
  		if (input != "" && method != "GET") {
-			DataOutputStream outStream = new DataOutputStream(con.getOutputStream());
-			outStream.writeBytes(input);
-			outStream.flush();
-			outStream.close();
+            DataOutputStream outStream = new DataOutputStream(con.getOutputStream());
+            BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(outStream, "UTF-8"));
+            writer.write(input);
+            writer.flush();
+            writer.close();
+            outStream.close();
 		}
 		
         int responseCode = con.getResponseCode();
