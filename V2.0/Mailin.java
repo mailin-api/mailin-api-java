@@ -42,11 +42,17 @@ public class Mailin {
 		}
 		
         int responseCode = con.getResponseCode();
- 
-        BufferedReader in = new BufferedReader(
-                new InputStreamReader(con.getInputStream()));
         String inputLine;
         StringBuffer response = new StringBuffer();
+        BufferedReader in;
+
+        if (responseCode > 200) {
+            in = new BufferedReader(
+            new InputStreamReader(con.getErrorStream()));
+        } else {
+            in = new BufferedReader(
+            new InputStreamReader(con.getInputStream()));
+        }
 
         while ((inputLine = in.readLine()) != null) {
             response.append(inputLine);
