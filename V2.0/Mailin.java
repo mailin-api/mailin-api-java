@@ -211,7 +211,7 @@ public class Mailin {
         return get("campaign/" + id + "/detailsv2/", "");
     }
 
-    public String create_campaign(String category, String from_name, String name, String bat_sent, String html_content, String html_url, int [] listid, String scheduled_date, String subject, String from_email, String reply_to, String to_field, int [] exclude_list) {
+    public String create_campaign(String category, String from_name, String name, String bat_sent, String html_content, String html_url, int [] listid, String scheduled_date, String subject, String from_email, String reply_to, String to_field, int [] exclude_list, String attachmentUrl, int inline_image) {
         Map < String, Object > map = new HashMap < String, Object > ();
         map.put("category", category);
         map.put("from_name", from_name);
@@ -226,6 +226,8 @@ public class Mailin {
         map.put("reply_to", reply_to);
         map.put("to_field", to_field);
         map.put("exclude_list", exclude_list);
+        map.put("attachment_url", attachmentUrl);
+        map.put("inline_image", inline_image);
         Gson gson = new Gson();
         String json = gson.toJson(map);
         return post("campaign", json);
@@ -244,7 +246,7 @@ public class Mailin {
         return get("process", json);
     }
 
-    public String update_campaign(int id, String category, String from_name, String name, String bat_sent, String html_content, String html_url, int [] listid, String scheduled_date, String subject, String from_email, String reply_to, String to_field, int [] exclude_list) {
+    public String update_campaign(int id, String category, String from_name, String name, String bat_sent, String html_content, String html_url, int [] listid, String scheduled_date, String subject, String from_email, String reply_to, String to_field, int [] exclude_list, String attachmentUrl, int inline_image) {
         Map < String, Object > map = new HashMap < String, Object > ();
         map.put("category", category);
         map.put("from_name", from_name);
@@ -259,6 +261,8 @@ public class Mailin {
         map.put("reply_to", reply_to);
         map.put("to_field", to_field);
         map.put("exclude_list", exclude_list);
+        map.put("attachment_url", attachmentUrl);
+        map.put("inline_image", inline_image);
         Gson gson = new Gson();
         String json = gson.toJson(map);
         return put("campaign/" + id, json);
@@ -295,7 +299,7 @@ public class Mailin {
         return post("campaign/" + campid + "/test", json);
     }
 
-    public String create_trigger_campaign(String category, String from_name, String name, String bat_sent, String html_content, String html_url, int [] listid, String scheduled_date, String subject, String from_email, String reply_to, String to_field, int [] exclude_list, int recurring) {
+    public String create_trigger_campaign(String category, String from_name, String name, String bat_sent, String html_content, String html_url, int [] listid, String scheduled_date, String subject, String from_email, String reply_to, String to_field, int [] exclude_list, int recurring, String attachmentUrl, int inline_image) {
         Map < String, Object > map = new HashMap < String, Object > ();
         map.put("category", category);
         map.put("from_name", from_name);
@@ -311,12 +315,14 @@ public class Mailin {
         map.put("to_field", to_field);
         map.put("exclude_list", exclude_list);
         map.put("recurring", recurring);
+        map.put("attachment_url", attachmentUrl);
+        map.put("inline_image", inline_image);
         Gson gson = new Gson();
         String json = gson.toJson(map);
         return post("campaign", json);
     }
 
-    public String update_trigger_campaign(int id, String category, String from_name, String name, String bat_sent, String html_content, String html_url, int [] listid, String scheduled_date, String subject, String from_email, String reply_to, String to_field, int [] exclude_list, int recurring) {
+    public String update_trigger_campaign(int id, String category, String from_name, String name, String bat_sent, String html_content, String html_url, int [] listid, String scheduled_date, String subject, String from_email, String reply_to, String to_field, int [] exclude_list, int recurring, String attachmentUrl, int inline_image) {
         Map < String, Object > map = new HashMap < String, Object > ();
         map.put("category", category);
         map.put("from_name", from_name);
@@ -332,6 +338,8 @@ public class Mailin {
         map.put("to_field", to_field);
         map.put("exclude_list", exclude_list);
         map.put("recurring", recurring);
+        map.put("attachment_url", attachmentUrl);
+        map.put("inline_image", inline_image);
         Gson gson = new Gson();
         String json = gson.toJson(map);
         return put("campaign/" + id, json);
@@ -631,18 +639,20 @@ public class Mailin {
         return post("bounces", json);
     }
 
-    public String send_transactional_template(int id, String to, String cc, String bcc, Object attr) {
+    public String send_transactional_template(int id, String to, String cc, String bcc, Object attr, String attachmentUrl, Object attachment) {
         Map < String, Object > map = new HashMap < String, Object > ();
         map.put("cc", cc);
         map.put("to", to);
         map.put("attr", attr);
         map.put("bcc", bcc);
+        map.put("attachment_url", attachmentUrl);
+        map.put("attachment", attachment);
         Gson gson = new Gson();
         String json = gson.toJson(map);
         return put("template/" + id, json);
     }
 
-    public String create_template(String from_name, String name, String bat_sent, String html_content, String html_url, String subject, String from_email, String reply_to, String to_field, int status) {
+    public String create_template(String from_name, String name, String bat_sent, String html_content, String html_url, String subject, String from_email, String reply_to, String to_field, int status, int attach) {
         Map < String, Object > map = new HashMap < String, Object > ();
         map.put("from_name", from_name);
         map.put("template_name", name);
@@ -654,12 +664,13 @@ public class Mailin {
         map.put("reply_to", reply_to);
         map.put("to_field", to_field);
         map.put("status", status);
+        map.put("attachment", attach);
         Gson gson = new Gson();
         String json = gson.toJson(map);
         return post("template", json);
     }
 
-    public String update_template(int id, String from_name, String name, String bat_sent, String html_content, String html_url, String subject, String from_email, String reply_to, String to_field, int status) {
+    public String update_template(int id, String from_name, String name, String bat_sent, String html_content, String html_url, String subject, String from_email, String reply_to, String to_field, int status, int attach) {
         Map < String, Object > map = new HashMap < String, Object > ();
         map.put("from_name", from_name);
         map.put("template_name", name);
@@ -671,6 +682,7 @@ public class Mailin {
         map.put("reply_to", reply_to);
         map.put("to_field", to_field);
         map.put("status", status);
+        map.put("attachment", attach);
         Gson gson = new Gson();
         String json = gson.toJson(map);
         return put("template/" + id, json);
