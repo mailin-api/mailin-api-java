@@ -523,12 +523,13 @@ public class Mailin {
         return put("user/" + email, json);
     }
 
-    public String import_users(String url, int [] listids, String notify_url, String name) {
+    public String import_users(String url, int [] listids, String notify_url, String name, int folder_id) {
         Map < String, Object > map = new HashMap < String, Object > ();
         map.put("url", url);
         map.put("listids", listids);
         map.put("notify_url", notify_url);
         map.put("name", name);
+        map.put("list_parent", folder_id);
         Gson gson = new Gson();
         String json = gson.toJson(map);
         return post("user/import", json);
