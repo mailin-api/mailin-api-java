@@ -107,7 +107,7 @@ public class Mailin {
         return get("account/smtpdetail", "");
     }
 
-    public String create_child_account(String email, String password, String company_org, String first_name, String last_name, Object credits) {
+    public String create_child_account(String email, String password, String company_org, String first_name, String last_name, Object credits, String [] associate_ip) {
         Map < String, Object > map = new HashMap < String, Object > ();
         map.put("child_email", email);
         map.put("password", password);
@@ -115,17 +115,20 @@ public class Mailin {
         map.put("first_name", first_name);
         map.put("last_name", last_name);
         map.put("credits", credits);
+        map.put("associate_ip", associate_ip);
         Gson gson = new Gson();
         String json = gson.toJson(map);
         return post("account", json);
     }
-    public String update_child_account(String child_authkey, String company_org, String first_name, String last_name, String password) {
+    public String update_child_account(String child_authkey, String company_org, String first_name, String last_name, String password, String [] associate_ip, String [] disassociate_ip) {
         Map < String, String > map = new HashMap < String, String > ();
         map.put("auth_key", child_authkey);
         map.put("company_org", company_org);
         map.put("first_name", first_name);
         map.put("last_name", last_name);
         map.put("password", password);
+        map.put("associate_ip", associate_ip);
+        map.put("disassociate_ip", disassociate_ip);
         Gson gson = new Gson();
         String json = gson.toJson(map);
         return put("account", json);
