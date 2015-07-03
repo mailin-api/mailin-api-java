@@ -121,7 +121,7 @@ public class Mailin {
         return post("account", json);
     }
     public String update_child_account(String child_authkey, String company_org, String first_name, String last_name, String password, String [] associate_ip, String [] disassociate_ip) {
-        Map < String, String > map = new HashMap < String, String > ();
+        Map < String, Object > map = new HashMap < String, Object > ();
         map.put("auth_key", child_authkey);
         map.put("company_org", company_org);
         map.put("first_name", first_name);
