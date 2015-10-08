@@ -29,31 +29,29 @@ public class Mailin {
          
         con.setRequestProperty("api-key", key);
         con.setRequestProperty("Content-Type", content_header);
-		con.setDoOutput(true);
-		con.setDoInput(true);
-		con.setRequestMethod(method);
-		con.setUseCaches(false);
-		
- 		if (input != "" && method != "GET") {
+        con.setDoOutput(true);
+        con.setDoInput(true);
+        con.setRequestMethod(method);
+        con.setUseCaches(false);
+        
+        if (input != "" && method != "GET") {
             DataOutputStream outStream = new DataOutputStream(con.getOutputStream());
             BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(outStream, "UTF-8"));
             writer.write(input);
             writer.flush();
             writer.close();
             outStream.close();
-		}
-		
+        }
+        
         int responseCode = con.getResponseCode();
         String inputLine;
         StringBuffer response = new StringBuffer();
         BufferedReader in;
 
-        if (responseCode > 200) {
-            in = new BufferedReader(
-            new InputStreamReader(con.getErrorStream()));
+        if (200 <= responseCode && responseCode < 300) {
+            in = new BufferedReader(new InputStreamReader(con.getInputStream()));
         } else {
-            in = new BufferedReader(
-            new InputStreamReader(con.getInputStream()));
+            in = new BufferedReader(new InputStreamReader(con.getErrorStream()));
         }
 
         while ((inputLine = in.readLine()) != null) {
@@ -62,19 +60,19 @@ public class Mailin {
         in.close();
         return response.toString();
     }
- 
-    public String get(String resource, String input) {
-    try {
-    return do_request(resource, "GET", input);
-    } catch (Exception e) {
 
-    }
-    return null;
+    public String get(String resource, String input) {
+        try {
+            return do_request(resource, "GET", input);
+        } catch (Exception e) {
+
+        }
+        return null;
     }
 
     public String put(String resource, String input) {
         try {
-        return do_request(resource, "PUT", input);
+            return do_request(resource, "PUT", input);
         } catch (Exception e) {
 
         }
@@ -83,7 +81,7 @@ public class Mailin {
 
     public String post(String resource, String input) {
         try {
-        return do_request(resource, "POST", input);
+            return do_request(resource, "POST", input);
         } catch (Exception e) {
 
         }
@@ -92,115 +90,184 @@ public class Mailin {
 
     public String delete(String resource, String input) {
         try {
-        return do_request(resource, "DELETE", input);
+            return do_request(resource, "DELETE", input);
         } catch (Exception e) {
 
         }
         return null;
     }
 
+    /*
+        Get Account.
+        No input required
+    */
     public String get_account() {
         return get("account", "");
     }
 
+    /*
+        Get SMTP details.
+        No input required
+    */
     public String get_smtp_details() {
         return get("account/smtpdetail", "");
     }
 
-    public String create_child_account(String email, String password, String company_org, String first_name, String last_name, Object credits, String [] associate_ip) {
-        Map < String, Object > map = new HashMap < String, Object > ();
-        map.put("child_email", email);
-        map.put("password", password);
-        map.put("company_org", company_org);
-        map.put("first_name", first_name);
-        map.put("last_name", last_name);
-        map.put("credits", credits);
-        map.put("associate_ip", associate_ip);
+    /*
+        Create Child Account.
+        @param {Object} data contains json objects as a key value pair from HashMap.
+        @options data {String} child_email: Email address of Reseller child [Mandatory]
+        @options data {String} password: Password of Reseller child to login [Mandatory]
+        @options data {String} company_org: Name of Reseller child’s company [Mandatory]
+        @options data {String} first_name: First name of Reseller child [Mandatory]
+        @options data {String} last_name: Last name of Reseller child [Mandatory]
+        @options data {Array} credits: Number of email & sms credits respectively, which will be assigned to the Reseller child’s account [Optional]
+            - email_credit {Integer} number of email credits
+            - sms_credit {Integer} Number of sms credts
+        @options data {Array} associate_ip: Associate dedicated IPs to reseller child. You can use commas to separate multiple IPs [Optional]
+    */
+    public String create_child_account(Object data) {
         Gson gson = new Gson();
-        String json = gson.toJson(map);
+        String json = gson.toJson(data);
         return post("account", json);
     }
-    public String update_child_account(String child_authkey, String company_org, String first_name, String last_name, String password, String [] associate_ip, String [] disassociate_ip) {
-        Map < String, Object > map = new HashMap < String, Object > ();
-        map.put("auth_key", child_authkey);
-        map.put("company_org", company_org);
-        map.put("first_name", first_name);
-        map.put("last_name", last_name);
-        map.put("password", password);
-        map.put("associate_ip", associate_ip);
-        map.put("disassociate_ip", disassociate_ip);
+
+    /*
+        Update Child Account.
+        @param {Object} data contains json objects as a key value pair from HashMap.
+        @options data {String} auth_key: 16 character authorization key of Reseller child to be modified [Mandatory]
+        @options data {String} company_org: Name of Reseller child’s company [Optional]
+        @options data {String} first_name: First name of Reseller child [Optional]
+        @options data {String} last_name: Last name of Reseller child [Optional]
+        @options data {String} password: Password of Reseller child to login [Optional]
+        @options data {Array} associate_ip: Associate dedicated IPs to reseller child. You can use commas to separate multiple IPs [Optional]
+        @options data {Array} disassociate_ip: Disassociate dedicated IPs from reseller child. You can use commas to separate multiple IPs [Optional]
+    */
+    public String update_child_account(Object data) {
         Gson gson = new Gson();
-        String json = gson.toJson(map);
+        String json = gson.toJson(data);
         return put("account", json);
     }
-    public String delete_child_account(String child_authkey) {
+
+    /*
+        Delete Child Account.
+        @param {Object} data contains json objects as a key value pair from HashMap.
+        @options data {String} auth_key: 16 character authorization key of Reseller child to be deleted [Mandatory]
+    */
+    public String delete_child_account(Map<String,String> data) {
+        String child_authkey = data.get("auth_key"); 
         return delete("account/" + child_authkey, "");
     }
 
-    public String get_reseller_child(String child_authkey) {
-        Map < String, String > map = new HashMap < String, String > ();
-        map.put("auth_key", child_authkey);
+    /*
+        Get Reseller child Account.
+        @param {Object} data contains json objects as a key value pair from HashMap.
+        @options data {String} auth_key: 16 character authorization key of Reseller child. Example : To get the details of more than one child account, use, {"key1":"abC01De2fGHI3jkL","key2":"mnO45Pq6rSTU7vWX"} [Mandatory]
+    */
+    public String get_reseller_child(Object data) {
         Gson gson = new Gson();
-        String json = gson.toJson(map);
+        String json = gson.toJson(data);
         return post("account/getchildv2", json);
     }
 
-    public String add_remove_child_credits(String child_authkey, Object add_credits, Object remove_credits) {
-        Map < String, Object > map = new HashMap < String, Object > ();
-        map.put("auth_key", child_authkey);
-        map.put("add_credit", add_credits);
-        map.put("rmv_credit", remove_credits);
+    /*
+        Add/Remove Reseller child's Email/Sms credits.
+        @param {Object} data contains json objects as a key value pair from HashMap.
+        @options data {String} auth_key: 16 character authorization key of Reseller child to modify credits [Mandatory]
+        @options data {Array} add_credit: Number of email & sms credits to be added. You can assign either email or sms credits, one at a time other will remain 0. [Mandatory: if rmv_credit is empty]
+            - email_credit {Integer} number of email credits
+            - sms_credit {Integer} Number of sms credts
+        @options data {Array} rmv_credit: Number of email & sms credits to be removed. You can assign either email or sms credits, one at a time other will remain 0. [Mandatory: if add_credits is empty]
+            - email_credit {Integer} number of email credits
+            - sms_credit {Integer} Number of sms credts
+    */
+    public String add_remove_child_credits(Object data) {
         Gson gson = new Gson();
-        String json = gson.toJson(map);
+        String json = gson.toJson(data);
         return post("account/addrmvcredit", json);
     }
 
-    public String send_sms(String to, String from, String text, String web_url, String tag, String type) {
-        Map < String, String > map = new HashMap < String, String > ();
-        map.put("text", text);
-        map.put("tag", tag);
-        map.put("web_url", web_url);
-        map.put("from", from);
-        map.put("to", to);
-        map.put("type", type);
+    /*
+        Send a transactional SMS.
+        @param {Object} data contains json objects as a key value pair from HashMap.
+        @options data {String} to: The mobile number to send SMS to with country code [Mandatory]
+        @options data {String} from: The name of the sender. The number of characters is limited to 11 (alphanumeric format) [Mandatory]
+        @options data {String} text: The text of the message. The maximum characters used per SMS is 160, if used more than that, it will be counted as more than one SMS [Mandatory]
+        @options data {String} web_url: The web URL that can be called once the message is successfully delivered [Optional]
+        @options data {String} tag: The tag that you can associate with the message [Optional]
+        @options data {String} type: Type of message. Possible values – marketing (default) & transactional. You can use marketing for sending marketing SMS, & for sending transactional SMS, use transactional type [Optional]
+    */
+    public String send_sms(Object data) {
         Gson gson = new Gson();
-        String json = gson.toJson(map);
+        String json = gson.toJson(data);
         return post("sms", json);
     }
 
-    public String create_sms_campaign(String camp_name, String sender, String content, String bat_sent, int [] listids, int [] exclude_list, String scheduled_date) {
-        Map < String, Object > map = new HashMap < String, Object > ();
-        map.put("name", camp_name);
-        map.put("sender", sender);
-        map.put("content", content);
-        map.put("bat", bat_sent);
-        map.put("listid", listids);
-        map.put("exclude_list", exclude_list);
-        map.put("scheduled_date", scheduled_date);
+    /*
+        Create & Schedule your SMS campaigns.
+        @param {Object} data contains json objects as a key value pair from HashMap.
+        @options data {String} name: Name of the SMS campaign [Mandatory]
+        @options data {String} sender: This allows you to customize the SMS sender. The number of characters is limited to 11 ( alphanumeric format ) [Optional]
+        @options data {String} content: Content of the message. The maximum characters used per SMS is 160, if used more than that, it will be counted as more than one SMS [Optional]
+        @options data {String} bat: Mobile number with the country code to send test SMS. The mobile number defined here should belong to one of your contacts in SendinBlue account and should not be blacklisted [Optional]
+        @options data {Array} listid: These are the list ids to which the SMS campaign is sent [Mandatory: if scheduled_date is not empty]
+        @options data {Array} exclude_list: These are the list ids which will be excluded from the SMS campaign [Optional]
+        @options data {String} scheduled_date: The day on which the SMS campaign is supposed to run [Optional]
+        @options data {Integer} send_now: Flag to send campaign now. Possible values = 0 (default) & 1. send_now = 0 means campaign can’t be send now, & send_now = 1 means campaign ready to send now [Optional]
+    */
+    public String create_sms_campaign(Object data) {
         Gson gson = new Gson();
-        String json = gson.toJson(map);
+        String json = gson.toJson(data);
         return post("sms", json);
     }
 
-    public String update_sms_campaign(int id, String camp_name, String sender, String content, String bat_sent, int [] listids, int [] exclude_list, String scheduled_date) {
-        Map < String, Object > map = new HashMap < String, Object > ();
-        map.put("name", camp_name);
-        map.put("sender", sender);
-        map.put("content", content);
-        map.put("bat", bat_sent);
-        map.put("listid", listids);
-        map.put("exclude_list", exclude_list);
-        map.put("scheduled_date", scheduled_date);
+    /*
+        Update your SMS campaigns.
+        @param {Object} data contains json objects as a key value pair from HashMap.
+        @options data {Integer} id: Id of the SMS campaign [Mandatory]
+        @options data {String} name: Name of the SMS campaign [Optional]
+        @options data {String} sender: This allows you to customize the SMS sender. The number of characters is limited to 11 ( alphanumeric format ) [Optional]
+        @options data {String} content: Content of the message. The maximum characters used per SMS is 160, if used more than that, it will be counted as more than one SMS [Optional]
+        @options data {String} bat: Mobile number with the country code to send test SMS. The mobile number defined here should belong to one of your contacts in SendinBlue account and should not be blacklisted [Optional]
+        @options data {Array} listid: hese are the list ids to which the SMS campaign is sent [Mandatory: if scheduled_date is not empty]
+        @options data {Array} exclude_list: These are the list ids which will be excluded from the SMS campaign [Optional]
+        @options data {String} scheduled_date: The day on which the SMS campaign is supposed to run [Optional]
+        @options data {Integer} send_now: Flag to send campaign now. Possible values = 0 (default) & 1. send_now = 0 means campaign can’t be send now, & send_now = 1 means campaign ready to send now [Optional]
+    */
+    public String update_sms_campaign(Map<String,Object> data) {
+        String id = data.get("id").toString();
         Gson gson = new Gson();
-        String json = gson.toJson(map);
+        String json = gson.toJson(data);
         return put("sms/" + id, json);
     }
 
-    public String send_bat_sms(String campid, String mobilephone) {
-        return get("sms/" + campid+"/"+mobilephone, "");
+    /*
+        Send a Test SMS.
+        @param {Object} data contains json objects as a key value pair from HashMap.
+        @options data {Integer} id: Id of the SMS campaign [Mandatory]
+        @options data {String} to: Mobile number with the country code to send test SMS. The mobile number defined here should belong to one of your contacts in SendinBlue account and should not be blacklisted [Mandatory]
+    */
+    public String send_bat_sms(Map<String,Object> data) {
+        String id = data.get("id").toString(); 
+        String to = data.get("to").toString();
+        Gson gson = new Gson();
+        String json = gson.toJson(data);
+        return get("sms/" + id +"/" + to, "");
     }
 
-    public String get_campaigns_v2(String type, String status, String page, String page_limit) {
+    /*
+        Get all campaigns detail.
+        @param {Object} data contains json objects as a key value pair from HashMap.
+        @options data {String} type: Type of campaign. Possible values – classic, trigger, sms, template ( case sensitive ) [Optional]
+        @options data {String} status: Status of campaign. Possible values – draft, sent, archive, queued, suspended, in_process, temp_active, temp_inactive ( case sensitive ) [Optional]
+        @options data {Integer} page: Maximum number of records per request is 500, if there are more than 500 campaigns then you can use this parameter to get next 500 results [Optional]
+        @options data {Integer} page_limit: This should be a valid number between 1-1000. If page limit is kept empty or >1000, default is 500 [Optional]
+    */
+    public String get_campaigns_v2(Map<String,Object> data) {
+        String type = data.get("type").toString();  
+        String status = data.get("status").toString();  
+        String page = data.get("page").toString(); 
+        String page_limit = data.get("page_limit").toString(); 
         String url = "";
         if (type == "" && status == "" && page == "" && page_limit == "") {
             url = "campaign/detailsv2/";
@@ -210,243 +277,360 @@ public class Mailin {
         return get(url,"");
     }
 
-    public String get_campaign_v2(int id) {
+    /*  
+        Get a particular campaign detail.
+        @param {Object} data contains json objects as a key value pair from HashMap.
+        @options data {Integer} id: Unique Id of the campaign [Mandatory]
+    */
+    public String get_campaign_v2(Map<String,Object> data) {
+        String id = data.get("id").toString();
         return get("campaign/" + id + "/detailsv2/", "");
     }
 
-    public String create_campaign(String category, String from_name, String name, String bat_sent, String html_content, String html_url, int [] listid, String scheduled_date, String subject, String from_email, String reply_to, String to_field, int [] exclude_list, String attachmentUrl, int inline_image) {
-        Map < String, Object > map = new HashMap < String, Object > ();
-        map.put("category", category);
-        map.put("from_name", from_name);
-        map.put("name", name);
-        map.put("bat", bat_sent);
-        map.put("html_content", html_content);
-        map.put("html_url", html_url);
-        map.put("listid", listid);
-        map.put("scheduled_date", scheduled_date);
-        map.put("subject", subject);
-        map.put("from_email", from_email);
-        map.put("reply_to", reply_to);
-        map.put("to_field", to_field);
-        map.put("exclude_list", exclude_list);
-        map.put("attachment_url", attachmentUrl);
-        map.put("inline_image", inline_image);
+    /*
+        Create and Schedule your campaigns. It returns the ID of the created campaign.
+        @param {Object} data contains json objects as a key value pair from HashMap.
+        @options data {String} category: Tag name of the campaign [Optional]
+        @options data {String} from_name: Sender name from which the campaign emails are sent [Mandatory: for Dedicated IP clients, please make sure that the sender details are defined here, and in case of no sender, you can add them also via API & for Shared IP clients, if sender exists]
+        @options data {String} name: Name of the campaign [Mandatory]
+        @options data {String} bat: Email address for test mail [Optional]
+        @options data {String} html_content: Body of the content. The HTML content field must have more than 10 characters [Mandatory: if html_url is empty]
+        @options data {String} html_url: Url which content is the body of content [Mandatory: if html_content is empty]
+        @options data {Array} listid: These are the lists to which the campaign has been sent [Mandatory: if scheduled_date is not empty]
+        @options data {String} scheduled_date: The day on which the campaign is supposed to run[Optional]
+        @options data {String} subject: Subject of the campaign [Mandatory]
+        @options data {String} from_email: Sender email from which the campaign emails are sent [Mandatory: for Dedicated IP clients, please make sure that the sender details are defined here, and in case of no sender, you can add them also via API & for Shared IP clients, if sender exists]
+        @options data {String} reply_to: The reply to email in the campaign emails [Optional]
+        @options data {String} to_field: This is to personalize the «To» Field. If you want to include the first name and last name of your recipient, add [PRENOM] [NOM] To use the contact attributes here, these should already exist in SendinBlue account [Optional]
+        @options data {Array} exclude_list: These are the lists which must be excluded from the campaign [Optional]
+        @options data {String} attachment_url: Provide the absolute url of the attachment [Optional]
+        @options data {Integer} inline_image: Status of inline image. Possible values = 0 (default) & 1. inline_image = 0 means image can’t be embedded, & inline_image = 1 means image can be embedded, in the email [Optional]
+        @options data {Integer} mirror_active: Status of mirror links in campaign. Possible values = 0 & 1 (default). mirror_active = 0 means mirror links are deactivated, & mirror_active = 1 means mirror links are activated, in the campaign [Optional]
+        @options data {Integer} send_now: Flag to send campaign now. Possible values = 0 (default) & 1. send_now = 0 means campaign can’t be send now, & send_now = 1 means campaign ready to send now [Optional]
+
+    */
+    public String create_campaign(Object data) {
         Gson gson = new Gson();
-        String json = gson.toJson(map);
+        String json = gson.toJson(data);
         return post("campaign", json);
     }
 
-    public String delete_campaign(int id) {
+    /*
+        Update your campaign.
+        @param {Object} data contains json objects as a key value pair from HashMap.
+        @options data {Integer} id: Id of campaign to be modified [Mandatory]
+        @options data {String} category: Tag name of the campaign [Optional]
+        @options data {String} from_name: Sender name from which the campaign emails are sent [Mandatory: for Dedicated IP clients, please make sure that the sender details are defined here, and in case of no sender, you can add them also via API & for Shared IP clients, if sender exists]
+        @options data {String} name: Name of the campaign [Optional]
+        @options data {String} bat: Email address for test mail [Optional]
+        @options data {String} html_content: Body of the content. The HTML content field must have more than 10 characters [Optional]
+        @options data {String} html_url: Url which content is the body of content [Optional]
+        @options data {Array} listid These are the lists to which the campaign has been sent [Mandatory: if scheduled_date is not empty]
+        @options data {String} scheduled_date: The day on which the campaign is supposed to run[Optional]
+        @options data {String} subject: Subject of the campaign.
+        @options data {String} from_email: Sender email from which the campaign emails are sent [Mandatory: for Dedicated IP clients, please make sure that the sender details are defined here, and in case of no sender, you can add them also via API & for Shared IP clients, if sender exists]
+        @options data {String} reply_to: The reply to email in the campaign emails [Optional]
+        @options data {String} to_field: This is to personalize the «To» Field. If you want to include the first name and last name of your recipient, add [PRENOM] [NOM]. To use the contact attributes here, these should already exist in SendinBlue account [Optional]
+        @options data {Array} exclude_list: These are the lists which must be excluded from the campaign [Optional]
+        @options data {String} attachment_url: Provide the absolute url of the attachment [Optional]
+        @options data {Integer} inline_image: Status of inline image. Possible values = 0 (default) & 1. inline_image = 0 means image can’t be embedded, & inline_image = 1 means image can be embedded, in the email [Optional]
+        @options data {Integer} mirror_active: Status of mirror links in campaign. Possible values = 0 & 1 (default). mirror_active = 0 means mirror links are deactivated, & mirror_active = 1 means mirror links are activated, in the campaign [Optional]
+        @options data {Integer} send_now: Flag to send campaign now. Possible values = 0 (default) & 1. send_now = 0 means campaign can’t be send now, & send_now = 1 means campaign ready to send now [Optional]
+    */
+    public String update_campaign(Map<String,Object> data) {
+        String id = data.get("id").toString();
+        Gson gson = new Gson();
+        String json = gson.toJson(data);
+        return put("campaign/" + id, json);
+    }
+
+    /*
+        Delete your campaigns.
+        @param {Object} data contains json objects as a key value pair from HashMap.
+        @options data {Integer} id: Id of campaign to be deleted [Mandatory]
+    */
+    public String delete_campaign(Map<String,Object> data) {
+        String id = data.get("id").toString();
         return delete("campaign/" + id, "");
     }
 
-    public String get_processes(int page, int page_limit) {
-        Map < String, Object > map = new HashMap < String, Object > ();
-        map.put("page", page);
-        map.put("page_limit", page_limit);
+    /*
+        Send report of Sent and Archived campaign.
+        @param {Object} data contains json objects as a key value pair from HashMap.
+        @options data {Integer} id: Id of campaign to send its report [Mandatory]
+        @options data {String} lang: Language of email content. Possible values – fr (default), en, es, it & pt [Optional]
+        @options data {String} email_subject: Message subject [Mandatory]
+        @options data {Array} email_to: Email address of the recipient(s). Example: "test@example.net". You can use commas to separate multiple recipients [Mandatory]
+        @options data {String} email_content_type: Body of the message in text/HTML version. Possible values – text & html [Mandatory]
+        @options data {Array} email_bcc: Same as email_to but for Bcc [Optional]
+        @options data {Array} email_cc: Same as email_to but for Cc [Optional]
+        @options data {String} email_body: Body of the message [Mandatory]
+    */
+    public String campaign_report_email(Map<String,Object> data) {
+        String id = data.get("id").toString();
         Gson gson = new Gson();
-        String json = gson.toJson(map);
-        return get("process", json);
-    }
-
-    public String update_campaign(int id, String category, String from_name, String name, String bat_sent, String html_content, String html_url, int [] listid, String scheduled_date, String subject, String from_email, String reply_to, String to_field, int [] exclude_list, String attachmentUrl, int inline_image) {
-        Map < String, Object > map = new HashMap < String, Object > ();
-        map.put("category", category);
-        map.put("from_name", from_name);
-        map.put("name", name);
-        map.put("bat", bat_sent);
-        map.put("html_content", html_content);
-        map.put("html_url", html_url);
-        map.put("listid", listid);
-        map.put("scheduled_date", scheduled_date);
-        map.put("subject", subject);
-        map.put("from_email", from_email);
-        map.put("reply_to", reply_to);
-        map.put("to_field", to_field);
-        map.put("exclude_list", exclude_list);
-        map.put("attachment_url", attachmentUrl);
-        map.put("inline_image", inline_image);
-        Gson gson = new Gson();
-        String json = gson.toJson(map);
-        return put("campaign/" + id, json);
-    }
-
-    public String campaign_report_email(int id, String lang, String email_subject, String [] email_to, String email_content_type, String [] email_bcc, String [] email_cc, String email_body) {
-        Map < String, Object > map = new HashMap < String, Object > ();
-        map.put("lang", lang);
-        map.put("email_subject", email_subject);
-        map.put("email_to", email_to);
-        map.put("email_content_type", email_content_type);
-        map.put("email_bcc", email_bcc);
-        map.put("email_cc", email_cc);
-        map.put("email_body", email_body);
-        Gson gson = new Gson();
-        String json = gson.toJson(map);
+        String json = gson.toJson(data);
         return post("campaign/" + id + "/report", json);
     }
 
-    public String campaign_recipients_export(int id, String notify_url, String type) {
-        Map < String, Object > map = new HashMap < String, Object > ();
-        map.put("notify_url", notify_url);
-        map.put("type", type);
+    /*
+        Export the recipients of a specified campaign.
+        @param {Object} data contains json objects as a key value pair from HashMap.
+        @options data {Integer} id: Id of campaign to export its recipients [Mandatory]
+        @options data {String} notify_url: URL that will be called once the export process is finished [Mandatory]
+        @options data {String} type: Type of recipients. Possible values – all, non_clicker, non_opener, clicker, opener, soft_bounces, hard_bounces & unsubscribes [Mandatory]
+    */
+    public String campaign_recipients_export(Map<String,Object> data) {
+        String id = data.get("id").toString();
         Gson gson = new Gson();
-        String json = gson.toJson(map);
+        String json = gson.toJson(data);
         return post("campaign/" + id + "/recipients", json);
     }
 
-    public String send_bat_email(String campid, String [] email_to) {
-        Map < String, Object > map = new HashMap < String, Object > ();
-        map.put("emails", email_to);
+    /*
+        Send a Test Campaign.
+        @param {Object} data contains json objects as a key value pair from HashMap.
+        @options data {Integer} id: Id of the campaign [Mandatory]
+        @options data {Array} emails: Email address of recipient(s) existing in the one of the lists & should not be blacklisted. Example: "test@example.net". You can use commas to separate multiple recipients [Mandatory]
+    */
+    public String send_bat_email(Map<String,Object> data) {
+        String id = data.get("id").toString();
         Gson gson = new Gson();
-        String json = gson.toJson(map);
-        return post("campaign/" + campid + "/test", json);
+        String json = gson.toJson(data);
+        return post("campaign/" + id + "/test", json);
     }
 
-    public String create_trigger_campaign(String category, String from_name, String name, String bat_sent, String html_content, String html_url, int [] listid, String scheduled_date, String subject, String from_email, String reply_to, String to_field, int [] exclude_list, int recurring, String attachmentUrl, int inline_image) {
-        Map < String, Object > map = new HashMap < String, Object > ();
-        map.put("category", category);
-        map.put("from_name", from_name);
-        map.put("trigger_name", name);
-        map.put("bat", bat_sent);
-        map.put("html_content", html_content);
-        map.put("html_url", html_url);
-        map.put("listid", listid);
-        map.put("scheduled_date", scheduled_date);
-        map.put("subject", subject);
-        map.put("from_email", from_email);
-        map.put("reply_to", reply_to);
-        map.put("to_field", to_field);
-        map.put("exclude_list", exclude_list);
-        map.put("recurring", recurring);
-        map.put("attachment_url", attachmentUrl);
-        map.put("inline_image", inline_image);
+    /*
+        Create and schedule your Trigger campaigns.
+        @param {Object} data contains json objects as a key value pair from HashMap.
+        @options data {String} category: Tag name of the campaign [Optional]
+        @options data {String} from_name: Sender name from which the campaign emails are sent [Mandatory: for Dedicated IP clients, please make sure that the sender details are defined here, and in case of no sender, you can add them also via API & for Shared IP clients, if sender exists]
+        @options data {String} trigger_name: Name of the campaign [Mandatory]
+        @options data {String} bat: Email address for test mail [Optional]
+        @options data {String} html_content: Body of the content. The HTML content field must have more than 10 characters [Mandatory: if html_url is empty]
+        @options data {String} html_url: Url which content is the body of content [Mandatory: if html_content is empty]
+        @options data {Array} listid: These are the lists to which the campaign has been sent [Mandatory: if scheduled_date is not empty]
+        @options data {String} scheduled_date: The day on which the campaign is supposed to run[Optional]
+        @options data {String} subject: Subject of the campaign [Mandatory]
+        @options data {String} from_email: Sender email from which the campaign emails are sent [Mandatory: for Dedicated IP clients, please make sure that the sender details are defined here, and in case of no sender, you can add them also via API & for Shared IP clients, if sender exists]
+        @options data {String} reply_to: The reply to email in the campaign emails [Optional]
+        @options data {String} to_field: This is to personalize the «To» Field. If you want to include the first name and last name of your recipient, add [PRENOM] [NOM]. To use the contact attributes here, these should already exist in SendinBlue account [Optional]
+        @options data {Array} exclude_list: These are the lists which must be excluded from the campaign [Optional]
+        @options data {Integer} recurring: Type of trigger campaign. Possible values = 0 (default) & 1. recurring = 0 means contact can receive the same Trigger campaign only once, & recurring = 1 means contact can receive the same Trigger campaign several times [Optional]
+        @options data {String} attachment_url: Provide the absolute url of the attachment [Optional]
+        @options data {Integer} inline_image: Status of inline image. Possible values = 0 (default) & 1. inline_image = 0 means image can’t be embedded, & inline_image = 1 means image can be embedded, in the email [Optional]
+        @options data {Integer} mirror_active: Status of mirror links in campaign. Possible values = 0 & 1 (default). mirror_active = 0 means mirror links are deactivated, & mirror_active = 1 means mirror links are activated, in the campaign [Optional]
+        @options data {Integer} send_now: Flag to send campaign now. Possible values = 0 (default) & 1. send_now = 0 means campaign can’t be send now, & send_now = 1 means campaign ready to send now [Optional]
+    */
+    public String create_trigger_campaign(Object data) {
         Gson gson = new Gson();
-        String json = gson.toJson(map);
+        String json = gson.toJson(data);
         return post("campaign", json);
     }
 
-    public String update_trigger_campaign(int id, String category, String from_name, String name, String bat_sent, String html_content, String html_url, int [] listid, String scheduled_date, String subject, String from_email, String reply_to, String to_field, int [] exclude_list, int recurring, String attachmentUrl, int inline_image) {
-        Map < String, Object > map = new HashMap < String, Object > ();
-        map.put("category", category);
-        map.put("from_name", from_name);
-        map.put("trigger_name", name);
-        map.put("bat", bat_sent);
-        map.put("html_content", html_content);
-        map.put("html_url", html_url);
-        map.put("listid", listid);
-        map.put("scheduled_date", scheduled_date);
-        map.put("subject", subject);
-        map.put("from_email", from_email);
-        map.put("reply_to", reply_to);
-        map.put("to_field", to_field);
-        map.put("exclude_list", exclude_list);
-        map.put("recurring", recurring);
-        map.put("attachment_url", attachmentUrl);
-        map.put("inline_image", inline_image);
+    /*
+        Update and schedule your Trigger campaigns.
+        @param {Object} data contains json objects as a key value pair from HashMap.
+        @options data {Integer} id: Id of Trigger campaign to be modified [Mandatory]
+        @options data {String} category: Tag name of the campaign [Optional]
+        @options data {String} from_name: Sender name from which the campaign emails are sent [Mandatory: for Dedicated IP clients, please make sure that the sender details are defined here, and in case of no sender, you can add them also via API & for Shared IP clients, if sender exists]
+        @options data {String} trigger_name: Name of the campaign [Mandatory]
+        @options data {String} bat Email address for test mail [Optional]
+        @options data {String} html_content: Body of the content. The HTML content field must have more than 10 characters [Mandatory: if html_url is empty]
+        @options data {String} html_url: Url which content is the body of content [Mandatory: if html_content is empty]
+        @options data {Array} listid: These are the lists to which the campaign has been sent [Mandatory: if scheduled_date is not empty]
+        @options data {String} scheduled_date: The day on which the campaign is supposed to run[Optional]
+        @options data {String} subject: Subject of the campaign [Mandatory]
+        @options data {String} from_email: Sender email from which the campaign emails are sent [Mandatory: for Dedicated IP clients, please make sure that the sender details are defined here, and in case of no sender, you can add them also via API & for Shared IP clients, if sender exists]
+        @options data {String} reply_to: The reply to email in the campaign emails [Optional]
+        @options data {String} to_field: This is to personalize the «To» Field. If you want to include the first name and last name of your recipient, add [PRENOM] [NOM]. To use the contact attributes here, these should already exist in SendinBlue account [Optional]
+        @options data {Array} exclude_list: These are the lists which must be excluded from the campaign [Optional]
+        @options data {Integer} recurring: Type of trigger campaign. Possible values = 0 (default) & 1. recurring = 0 means contact can receive the same Trigger campaign only once, & recurring = 1 means contact can receive the same Trigger campaign several times [Optional]
+        @options data {String} attachment_url: Provide the absolute url of the attachment [Optional]
+        @options data {Integer} inline_image: Status of inline image. Possible values = 0 (default) & 1. inline_image = 0 means image can’t be embedded, & inline_image = 1 means image can be embedded, in the email [Optional]
+        @options data {Integer} mirror_active: Status of mirror links in campaign. Possible values = 0 & 1 (default). mirror_active = 0 means mirror links are deactivated, & mirror_active = 1 means mirror links are activated, in the campaign [Optional]
+        @options data {Integer} send_now: Flag to send campaign now. Possible values = 0 (default) & 1. send_now = 0 means campaign can’t be send now, & send_now = 1 means campaign ready to send now [Optional]
+    */
+    public String update_trigger_campaign(Map<String,Object> data) {
+        String id = data.get("id").toString();
         Gson gson = new Gson();
-        String json = gson.toJson(map);
+        String json = gson.toJson(data);
         return put("campaign/" + id, json);
     }
 
-    public String share_campaign(int [] campaign_ids) {
-        Map < String, Object > map = new HashMap < String, Object > ();
-        map.put("camp_ids", campaign_ids);
+    /*
+        Get the Campaign name, subject and share link of the classic type campaigns only which are sent, for those which are not sent and the rest of campaign types like trigger, template & sms, will return an error message of share link not available.
+        @param {Object} data contains json objects as a key value pair from HashMap.
+        @options data {Array} camp_ids: Id of campaign to get share link. You can use commas to separate multiple ids [Mandatory]
+    */
+    public String share_campaign(Object data) {
         Gson gson = new Gson();
-        String json = gson.toJson(map);
+        String json = gson.toJson(data);
         return post("campaign/sharelinkv2", json);
     }
 
-    public String update_campaign_status(int id, String status) {
-        Map < String, Object > map = new HashMap < String, Object > ();
-        map.put("status", status);
+    /*
+        Update the Campaign status.
+        @param {Object} data contains json objects as a key value pair from HashMap.
+        @options data {Integer} id: Id of campaign to update its status [Mandatory]
+        @options data {String} status: Types of status. Possible values – suspended, archive, darchive, sent, queued, replicate and replicate_template ( case sensitive ) [Mandatory]
+    */
+    public String update_campaign_status(Map<String,Object> data) {
+        String id = data.get("id").toString();
         Gson gson = new Gson();
-        String json = gson.toJson(map);
+        String json = gson.toJson(data);
         return put("campaign/" + id + "/updatecampstatus", json);
     }
 
-    public String get_process(int id) {
+    /*
+        Get all the processes information under the account.
+        @param {Object} data contains json objects as a key value pair from HashMap.
+        @options data {Integer} page: Maximum number of records per request is 50, if there are more than 50 processes then you can use this parameter to get next 50 results [Mandatory]
+        @options data {Integer} page_limit: This should be a valid number between 1-50 [Mandatory]
+    */
+    public String get_processes(Object data) {
+        Gson gson = new Gson();
+        String json = gson.toJson(data);
+        return get("process", json);
+    }
+
+    /*
+        Get the process information.
+        @param {Object} data contains json objects as a key value pair from HashMap.
+        @options data {Integer} id: Id of process to get details [Mandatory]
+    */
+    public String get_process(Map<String,Object> data) {
+        String id = data.get("id").toString();
         return get("process/" + id, "");
     }
 
-    public String get_lists(int page, int page_limit) {
-        Map < String, Object > map = new HashMap < String, Object > ();
-        map.put("page", page);
-        map.put("page_limit", page_limit);
+    /*
+        Get all lists detail.
+        @param {Object} data contains json objects as a key value pair from HashMap.
+        @options data {Integer} list_parent: This is the existing folder id & can be used to get all lists belonging to it [Optional]
+        @options data {Integer} page: Maximum number of records per request is 50, if there are more than 50 processes then you can use this parameter to get next 50 results [Mandatory]
+        @options data {Integer} page_limit: This should be a valid number between 1-50 [Mandatory]
+    */
+    public String get_lists(Object data) {
         Gson gson = new Gson();
-        String json = gson.toJson(map);
+        String json = gson.toJson(data);
         return get("list", json);
     }
 
-    public String get_list(int id) {
+    /*
+        Get a particular list detail.
+        @param {Object} data contains json objects as a key value pair from HashMap.
+        @options data {Integer} id: Id of list to get details [Mandatory]
+    */
+    public String get_list(Map<String,Object> data) {
+        String id = data.get("id").toString();
         return get("list/" + id, "");
     }
 
-    public String create_list(String list_name, int list_parent) {
-        Map < String, Object > map = new HashMap < String, Object > ();
-        map.put("list_name", list_name);
-        map.put("list_parent", list_parent);
+    /*
+        Create a new list.
+        @param {Object} data contains json objects as a key value pair from HashMap.
+        @options data {String} list_name: Desired name of the list to be created [Mandatory]
+        @options data {Integer} list_parent: Folder ID [Mandatory]
+    */
+    public String create_list(Object data) {
         Gson gson = new Gson();
-        String json = gson.toJson(map);
+        String json = gson.toJson(data);
         return post("list", json);
     }
 
-    public String delete_list(int id) {
+    /*
+        Delete a specific list.
+        @param {Object} data contains json objects as a key value pair from HashMap.
+        @options data {Integer} id: Id of list to be deleted [Mandatory]
+    */
+    public String delete_list(Map<String,Object> data) {
+        String id = data.get("id").toString();
         return delete("list/" + id, "");
     }
 
-    public String update_list(int id, String list_name, int list_parent) {
-        Map < String, Object > map = new HashMap < String, Object > ();
-        map.put("list_name", list_name);
-        map.put("list_parent", list_parent);
+    /*
+        Update a list.
+        @param {Object} data contains json objects as a key value pair from HashMap.
+        @options data {Integer} id: Id of list to be modified [Mandatory]
+        @options data {String} list_name: Desired name of the list to be modified [Optional]
+        @options data {Integer} list_parent: Folder ID [Mandatory]
+    */
+    public String update_list(Map<String,Object> data) {
+        String id = data.get("id").toString();
         Gson gson = new Gson();
-        String json = gson.toJson(map);
+        String json = gson.toJson(data);
         return put("list/" + id, json);
     }
 
-    public String display_list_users(int [] listids, int page, int page_limit) {
-        Map < String, Object > map = new HashMap < String, Object > ();
-        map.put("listids", listids);
-        map.put("page", page);
-        map.put("page_limit", page_limit);
+    /*
+        Display details of all users for the given lists.
+        @param {Object} data contains json objects as a key value pair from HashMap.
+        @options data {Array} listids: These are the list ids to get their data. The ids found will display records [Mandatory]
+        @options data {String} timestamp: This is date-time filter to fetch modified user records >= this time. Valid format Y-m-d H:i:s. Example: "2015-05-22 14:30:00" [Optional]
+        @options data {Integer} page: Maximum number of records per request is 500, if in your list there are more than 500 users then you can use this parameter to get next 500 results [Optional]
+        @options data {Integer} page_limit: This should be a valid number between 1-500 [Optional]
+    */
+    public String display_list_users(Object data) {
         Gson gson = new Gson();
-        String json = gson.toJson(map);
+        String json = gson.toJson(data);
         return post("list/display", json);
     }
 
-    public String add_users_list(int id, String [] users) {
-        Map < String, Object > map = new HashMap < String, Object > ();
-        map.put("users", users);
+    /*
+        Add already existing users in the SendinBlue contacts to the list.
+        @param {Object} data contains json objects as a key value pair from HashMap.
+        @options data {Integer} id: Id of list to link users in it [Mandatory]
+        @options data {Array} users: Email address of the already existing user(s) in the SendinBlue contacts. Example: "test@example.net". You can use commas to separate multiple users [Mandatory]
+    */
+    public String add_users_list(Map<String,Object> data) {
+        String id = data.get("id").toString();
         Gson gson = new Gson();
-        String json = gson.toJson(map);
+        String json = gson.toJson(data);
         return post("list/" + id + "/users", json);
     }
 
-    public String delete_users_list(int id, String [] users) {
-        Map < String, Object > map = new HashMap < String, Object > ();
-        map.put("users", users);
+    /*
+        Delete already existing users in the SendinBlue contacts from the list.
+        @param {Object} data contains json objects as a key value pair from HashMap.
+        @options data {Integer} id: Id of list to unlink users from it [Mandatory]
+        @options data {Array} users: Email address of the already existing user(s) in the SendinBlue contacts to be modified. Example: "test@example.net". You can use commas to separate multiple users [Mandatory]
+    */
+    public String delete_users_list(Map<String,Object> data) {
+        String id = data.get("id").toString();
         Gson gson = new Gson();
-        String json = gson.toJson(map);
+        String json = gson.toJson(data);
         return delete("list/" + id + "/delusers", json);
     }
 
-    public String send_email(Object to, String subject, String [] from, String html, String text, Object cc, Object bcc, String [] replyto, Object attachment, Object headers) {
-        Map < String, Object > map = new HashMap < String, Object > ();
-        map.put("cc", cc);
-        map.put("text", text);
-        map.put("bcc", bcc);
-        map.put("replyto", replyto);
-        map.put("html", html);
-        map.put("to", to);
-        map.put("attachment", attachment);
-        map.put("from", from);
-        map.put("subject", subject);
-        map.put("headers", headers);
+    /*
+        Send Transactional Email.
+        @param {Object} data contains json objects as a key value pair from HashMap.
+        @options data {Array} to: Email address of the recipient(s). It should be sent as an associative array. Example: array("to@example.net"=>"to whom"). You can use commas to separate multiple recipients [Mandatory]
+        @options data {String} subject: Message subject [Mandatory]
+        @options data {Array} from Email address for From header. It should be sent as an array. Example: array("from@email.com","from email") [Mandatory]
+        @options data {String} html: Body of the message. (HTML version) [Mandatory]. To send inline images, use <img src="{YourFileName.Extension}" alt="image" border="0" >, the 'src' attribute value inside {} (curly braces) should be same as the filename used in 'inline_image' parameter
+        @options data {String} text: Body of the message. (text version) [Optional]
+        @options data {Array} cc: Same as to but for Cc. Example: array("cc@example.net","cc whom") [Optional]
+        @options data {Array} bcc: Same as to but for Bcc. Example: array("bcc@example.net","bcc whom") [Optional]
+        @options data {Array} replyto: Same as from but for Reply To. Example: array("from@email.com","from email") [Optional]
+        @options data {Array} attachment: Provide the absolute url of the attachment/s. Possible extension values = gif, png, bmp, cgm, jpg, jpeg, txt, css, shtml, html, htm, csv, zip, pdf, xml, doc, xls, ppt, tar and ez. To send attachment/s generated on the fly you have to pass your attachment/s filename & its base64 encoded chunk data as an associative array. Example: array("YourFileName.Extension"=>"Base64EncodedChunkData"). You can use commas to separate multiple attachments [Optional]
+        @options data {Array} headers: The headers will be sent along with the mail headers in original email. Example: array("Content-Type"=>"text/html; charset=iso-8859-1"). You can use commas to separate multiple headers [Optional]
+        @options data {Array} inline_image: Pass your inline image/s filename & its base64 encoded chunk data as an associative array. Possible extension values = gif, png, bmp, cgm, jpg and jpeg. Example: array("YourFileName.Extension"=>"Base64EncodedChunkData"). You can use commas to separate multiple inline images [Optional]
+    */
+    public String send_email(Object data) {
         Gson gson = new Gson();
-        String json = gson.toJson(map);
+        String json = gson.toJson(data);
         return post("email", json);
     }
 
-    public String get_webhooks(String is_plat) {
+    /*
+        To retrieve details of all webhooks.
+        @param {Object} data contains json objects as a key value pair from HashMap.
+        @options data {String} is_plat: Flag to get webhooks. Possible values – 0 & 1. Example: to get Transactional webhooks, use $is_plat=0, to get Marketing webhooks, use $is_plat=1, & to get all webhooks, use $is_plat="" [Optional]
+    */
+    public String get_webhooks(Map<String,String> data) {
+        String is_plat = data.get("is_plat"); 
         String url = "";
         if (is_plat == "") {
             url = "webhook/";
@@ -456,273 +640,377 @@ public class Mailin {
         return get(url, "");
     }
 
-    public String get_webhook(int id) {
+    /*
+        To retrieve details of any particular webhook.
+        @param {Object} data contains json objects as a key value pair from HashMap.
+        @options data {Integer} id: Id of webhook to get details [Mandatory]
+    */
+    public String get_webhook(Map<String,Object> data) {
+        String id = data.get("id").toString();
         return get("webhook/" + id, "");
     }
 
-    public String create_webhook(String url, String description, String [] events, int is_plat) {
-        Map < String, Object > map = new HashMap < String, Object > ();
-        map.put("url", url);
-        map.put("description", description);
-        map.put("events", events);
-        map.put("is_plat", is_plat);
+    /*
+        Create a Webhook.
+        @param {Object} data contains json objects as a key value pair from HashMap.
+        @options data {String} url: URL that will be triggered by a webhook [Mandatory]
+        @options data {String} description: Webook description [Optional]
+        @options data {Array} events: Set of events. You can use commas to separate multiple events. Possible values for Transcational webhook – request, delivered, hard_bounce, soft_bounce, blocked, spam, invalid_email, deferred, click, & opened and Possible Values for Marketing webhook – spam, opened, click, hard_bounce, unsubscribe, soft_bounce & list_addition ( case sensitive ) [Mandatory]
+        @options data {Integer} is_plat: Flag to create webhook type. Possible values – 0 (default) & 1. Example: to create Transactional webhooks, use $is_plat=0, & to create Marketing webhooks, use $is_plat=1 [Optional]
+    */
+    public String create_webhook(Object data) {
         Gson gson = new Gson();
-        String json = gson.toJson(map);
+        String json = gson.toJson(data);
         return post("webhook", json);
     }
 
-    public String delete_webhook(int id) {
-        return delete("webhook/" + id, "");
+    /*
+        Delete a webhook.
+        @param {Object} data contains json objects as a key value pair from HashMap.
+        @options data {Integer} id: Id of webhook to be deleted [Mandatory]
+    */
+    public String delete_webhook(Map<String,Object> data) {
+        String id = data.get("id").toString();
+        return delete("webhook/" + id + "/", "");
     }
 
-    public String update_webhook(int id, String url, String description, String [] events) {
-        Map < String, Object > map = new HashMap < String, Object > ();
-        map.put("url", url);
-        map.put("description", description);
-        map.put("events", events);
+    /*
+        Update a webhook.
+        @param {Object} data contains json objects as a key value pair from HashMap.
+        @options data {Integer} id: Id of webhook to be modified [Mandatory]
+        @options data {String} url: URL that will be triggered by a webhook [Mandatory]
+        @options data {String} description: Webook description [Optional]
+        @options data {Array} events: Set of events. You can use commas to separate multiple events. Possible values for Transcational webhook – request, delivered, hard_bounce, soft_bounce, blocked, spam, invalid_email, deferred, click, & opened and Possible Values for Marketing webhook – spam, opened, click, hard_bounce, unsubscribe, soft_bounce & list_addition ( case sensitive ) [Mandatory]
+    */
+    public String update_webhook(Map<String,Object> data) {
+        String id = data.get("id").toString();
         Gson gson = new Gson();
-        String json = gson.toJson(map);
+        String json = gson.toJson(data);
         return put("webhook/" + id, json);
     }
-    public String get_statistics(int aggregate, String tag, int days, String end_date, String start_date) {
-        Map < String, Object > map = new HashMap < String, Object > ();
-        map.put("aggregate", aggregate);
-        map.put("tag", tag);
-        map.put("days", days);
-        map.put("end_date", end_date);
-        map.put("start_date", start_date);
+
+    /*
+        Aggregate / date-wise report of the SendinBlue SMTP account.
+        @param {Object} data contains json objects as a key value pair from HashMap.
+        @options data {Integer} aggregate: This is used to indicate, you are interested in all-time totals. Possible values – 0 & 1. aggregate = 0 means it will not aggregate records, and will show stats per day/date wise [Optional]
+        @options data {String} start_date: The start date to look up statistics. Date must be in YYYY-MM-DD format and should be before the end_date [Optional]
+        @options data {String} end_date: The end date to look up statistics. Date must be in YYYY-MM-DD format and should be after the start_date [Optional]
+        @options data {Integer} days: Number of days in the past to include statistics ( Includes today ). It must be an integer greater than 0 [Optional]
+        @options data {String} tag: The tag you will specify to retrieve detailed stats. It must be an existing tag that has statistics [Optional]
+    */
+    public String get_statistics(Object data) {
         Gson gson = new Gson();
-        String json = gson.toJson(map);
+        String json = gson.toJson(data);
         return post("statistics", json);
     }
 
-    public String get_user(String email) {
-        return get("user/" + email, "");
-    }
-
-    public String create_user(Object attributes, int blacklisted, String email, int [] listid) {
-        Map < String, Object > map = new HashMap < String, Object > ();
-        map.put("attributes", attributes);
-        map.put("blacklisted", blacklisted);
-        map.put("email", email);
-        map.put("listid", listid);
+    /*
+        Create a new user if an email provided as input, doesn’t exists in the contact list of your SendinBlue account, otherwise it will update the existing user.
+        @param {Object} data contains json objects as a key value pair from HashMap.
+        @options data {String} email: Email address of the user to be created in SendinBlue contacts. Already existing email address of user in the SendinBlue contacts to be modified [Mandatory]
+        @options data {Array} attributes: The name of attribute present in your SendinBlue account. It should be sent as an associative array. Example: array("NAME"=>"name"). You can use commas to separate multiple attributes [Optional]
+        @options data {Integer} blacklisted: This is used to blacklist/ Unblacklist a user. Possible values – 0 & 1. blacklisted = 1 means user has been blacklisted [Optional]
+        @options data {Array} listid: The list id(s) to be linked from user [Optional]
+        @options data {Array} listid_unlink: The list id(s) to be unlinked from user [Optional]
+        @options data {Array} blacklisted_sms: This is used to blacklist/ Unblacklist a user’s SMS number. Possible values – 0 & 1. blacklisted_sms = 1 means user’s SMS number has been blacklisted [Optional]
+    */
+    public String create_update_user(Object data) {
         Gson gson = new Gson();
-        String json = gson.toJson(map);
-        return post("user", json);
-    }
-
-    public String delete_user(String email) {
-        return delete("user/" + email, "");
-    }
-
-    public String update_user(String email, Object attributes, int blacklisted, int [] listid, int [] listid_unlink) {
-        Map < String, Object > map = new HashMap < String, Object > ();
-        map.put("attributes", attributes);
-        map.put("blacklisted", blacklisted);
-        map.put("listid", listid);
-        map.put("listid_unlink", listid_unlink);
-        Gson gson = new Gson();
-        String json = gson.toJson(map);
-        return put("user/" + email, json);
-    }
-
-    public String import_users(String url, int [] listids, String notify_url, String name, int folder_id) {
-        Map < String, Object > map = new HashMap < String, Object > ();
-        map.put("url", url);
-        map.put("listids", listids);
-        map.put("notify_url", notify_url);
-        map.put("name", name);
-        map.put("list_parent", folder_id);
-        Gson gson = new Gson();
-        String json = gson.toJson(map);
-        return post("user/import", json);
-    }
-
-    public String export_users(String export_attrib, String filter, String notify_url) {
-        Map < String, String > map = new HashMap < String, String > ();
-        map.put("export_attrib", export_attrib);
-        map.put("filter", filter);
-        map.put("notify_url", notify_url);
-        Gson gson = new Gson();
-        String json = gson.toJson(map);
-        return post("user/export", json);
-    }
-
-    public String create_update_user(String email, Object attributes, int blacklisted, int [] listid, int [] listid_unlink, int blacklisted_sms) {
-        Map < String, Object > map = new HashMap < String, Object > ();
-        map.put("email", email);
-        map.put("attributes", attributes);
-        map.put("blacklisted", blacklisted);
-        map.put("listid", listid);
-        map.put("listid_unlink", listid_unlink);
-        map.put("blacklisted_sms", blacklisted_sms);
-        Gson gson = new Gson();
-        String json = gson.toJson(map);
+        String json = gson.toJson(data);
         return post("user/createdituser", json);
     }
 
+    /*
+        Get Access a specific user Information.
+        @param {Object} data contains json objects as a key value pair from HashMap.
+        @options data {String} email: Email address of the already existing user in the SendinBlue contacts [Mandatory]
+    */
+    public String get_user(Map<String,String> data) {
+        String id = data.get("email"); 
+        return get("user/" + id, "");
+    }
+
+    /*
+        Unlink existing user from all lists.
+        @param {Object} data contains json objects as a key value pair from HashMap.
+        @options data {String} email: Email address of the already existing user in the SendinBlue contacts to be unlinked from all lists [Mandatory]
+    */
+    public String delete_user(Map<String,String> data) {
+        String id = data.get("email"); 
+        return delete("user/" + id, "");
+    }
+
+    /*
+        Import Users Information.
+        @param {Object} data contains json objects as a key value pair from HashMap.
+        @options data {String} url: The URL of the file to be imported. Possible file types – .txt, .csv [Mandatory: if body is empty]
+        @options data {String} body: The Body with csv content to be imported. Example: ‘NAME;SURNAME;EMAIL\n"Name1";"Surname1";"example1@example.net"\n"Name2";"Surname2";"example2@example.net"‘, where \n separates each user data. You can use semicolon to separate multiple attributes [Mandatory: if url is empty]
+        @options data {Array} listids: These are the list ids in which the the users will be imported [Mandatory: if name is empty]
+        @options data {String} notify_url: URL that will be called once the import process is finished [Optional] In notify_url, we are sending the content using POST method
+        @options data {String} name: This is new list name which will be created first & then users will be imported in it [Mandatory: if listids is empty]
+        @options data {Integer} list_parent: This is the existing folder id & can be used with name parameter to make newly created list’s desired parent [Optional]
+    */
+    public String import_users(Object data) {
+        Gson gson = new Gson();
+        String json = gson.toJson(data);
+        return post("user/import", json);
+    }
+
+    /*
+        Export Users Information.
+        @param {Object} data contains json objects as a key value pair from HashMap.
+        @options data {String} export_attrib: The name of attribute present in your SendinBlue account. You can use commas to separate multiple attributes. Example: "EMAIL,NAME,SMS" [Optional]
+        @options data {String} filter: Filter can be added to export users. Example: "{\"blacklisted\":1}", will export all blacklisted users [Mandatory]
+        @options data {String} notify_url: URL that will be called once the export process is finished [Optional]
+    */
+    public String export_users(Object data) {
+        Gson gson = new Gson();
+        String json = gson.toJson(data);
+        return post("user/export", json);
+    }
+
+    /*
+        Access all the attributes information under the account.
+        No input required
+    */
     public String get_attributes() {
         return get("attribute", "");
     }
 
-    public String get_attribute(String type) {
+    /*
+        Access the specific type of attribute information.
+        @param {Object} data contains json objects as a key value pair from HashMap.
+        @options data {String} type: Type of attribute. Possible values – normal, transactional, category, calculated & global [Optional]
+    */
+    public String get_attribute(Map<String,String> data) {
+        String type = data.get("type");
         return get("attribute/" + type, "");
     }
 
-    public String create_attribute(String type, Object data) {
-        Map < String, Object > map = new HashMap < String, Object > ();
-        map.put("type", type);
-        map.put("data", data);
+    /*
+        Create an Attribute.
+        @param {Object} data contains json objects as a key value pair from HashMap.
+        @options data {String} type: Type of attribute. Possible values – normal, transactional, category, calculated & global ( case sensitive ) [Mandatory]
+        @options data {Array} data: The name and data type of ‘normal’ & ‘transactional’ attribute to be created in your SendinBlue account. It should be sent as an associative array. Example: array(‘ATTRIBUTE_NAME1′ => ‘DATA_TYPE1′, ‘ATTRIBUTE_NAME2’=> ‘DATA_TYPE2′).
+        The name and data value of ‘category’, ‘calculated’ & ‘global’, should be sent as JSON string. Example: ‘[{ "name":"ATTRIBUTE_NAME1", "value":"Attribute_value1" }, { "name":"ATTRIBUTE_NAME2", "value":"Attribute_value2" }]’. You can use commas to separate multiple attributes [Mandatory]
+    */
+    public String create_attribute(Object data) {
         Gson gson = new Gson();
-        String json = gson.toJson(map);
+        String json = gson.toJson(data);
         return post("attribute", json);
     }
 
-    public String delete_attribute(String type, String [] data) {
-        Map < String, Object > map = new HashMap < String, Object > ();
-        map.put("data", data);
+    /*
+        Delete a specific type of attribute information.
+        @param {Object} data contains json objects as a key value pair from HashMap.
+        @options data {Integer} type: Type of attribute to be deleted [Mandatory]
+    */
+    public String delete_attribute(Map<String,Object> data) {
+        String type = data.get("type").toString();
         Gson gson = new Gson();
-        String json = gson.toJson(map);
+        String json = gson.toJson(data);
         return post("attribute/" + type, json);
     }
 
-    public String get_report(int limit, String start_date, String end_date, int offset, String date, String days, String email) {
-        Map < String, Object > map = new HashMap < String, Object > ();
-        map.put("limit", limit);
-        map.put("start_date", start_date);
-        map.put("end_date", end_date);
-        map.put("offset", offset);
-        map.put("date", date);
-        map.put("days", days);
-        map.put("email", email);
+    /*
+        Get Email Event report.
+        @param {Object} data contains json objects as a key value pair from HashMap.
+        @options data {Integer} limit: To limit the number of results returned. It should be an integer [Optional]
+        @options data {String} start_date: The start date to get report from. Date must be in YYYY-MM-DD format and should be before the end_date [Optional]
+        @options data {String} end_date: The end date to get report till date. Date must be in YYYY-MM-DD format and should be after the start_date [Optional]
+        @options data {Integer} offset: Beginning point in the list to retrieve from. It should be an integer [Optional]
+        @options data {String} date: Specific date to get its report. Date must be in YYYY-MM-DD format and should be earlier than todays date [Optional]
+        @options data {Integer} days: Number of days in the past (includes today). If specified, must be an integer greater than 0 [Optional]
+        @options data {String} email: Email address to search report for [Optional]
+    */
+    public String get_report(Object data) {
         Gson gson = new Gson();
-        String json = gson.toJson(map);
+        String json = gson.toJson(data);
         return post("report", json);
     }
 
-    public String get_folders(int page, int page_limit) {
-        Map < String, Object > map = new HashMap < String, Object > ();
-        map.put("page", page);
-        map.put("page_limit", page_limit);
+    /*
+        Get all folders detail.
+        @param {Object} data contains json objects as a key value pair from HashMap.
+        @options data {Integer} page: Maximum number of records per request is 50, if there are more than 50 folders then you can use this parameter to get next 50 results [Mandatory]
+        @options data {Integer} page_limit: This should be a valid number between 1-50 [Mandatory]
+    */
+    public String get_folders(Object data) {
         Gson gson = new Gson();
-        String json = gson.toJson(map);
+        String json = gson.toJson(data);
         return get("folder", json);
     }
 
-    public String get_folder(int id) {
+    /*
+        Get a particular folder detail.
+        @param {Object} data contains json objects as a key value pair from HashMap.
+        @options data {Integer} id: Id of folder to get details [Mandatory]
+    */
+    public String get_folder(Map<String,Object> data) {
+        String id = data.get("id").toString();
         return get("folder/" + id, "");
     }
 
-    public String create_folder(String name) {
-        Map < String, String > map = new HashMap < String, String > ();
-        map.put("name", name);
+    /*
+        Create a new folder.
+        @param {Object} data contains json objects as a key value pair from HashMap.
+        @options data {String} name: Desired name of the folder to be created [Mandatory]
+    */
+    public String create_folder(Object data) {
         Gson gson = new Gson();
-        String json = gson.toJson(map);
+        String json = gson.toJson(data);
         return post("folder", json);
     }
 
-    public String delete_folder(int id) {
+    /*
+        Delete a specific folder information.
+        @param {Object} data contains json objects as a key value pair from HashMap.
+        @options data {Integer} id: Id of folder to be deleted [Mandatory]
+    */
+    public String delete_folder(Map<String,Object> data) {
+        String id = data.get("id").toString();
         return delete("folder/" + id, "");
     }
 
-    public String update_folder(int id, String name) {
-        Map < String, Object > map = new HashMap < String, Object > ();
-        map.put("name", name);
+    /*
+        Update an existing folder.
+        @param {Object} data contains json objects as a key value pair from HashMap.
+        @options data {Integer} id: Id of folder to be modified [Mandatory]
+        @options data {String} name: Desired name of the folder to be modified [Mandatory]
+    */
+    public String update_folder(Map<String,Object> data) {
+        String id = data.get("id").toString();
         Gson gson = new Gson();
-        String json = gson.toJson(map);
+        String json = gson.toJson(data);
         return put("folder/" + id, json);
     }
 
-    public String delete_bounces(String start_date, String end_date, String email) {
-        Map < String, String > map = new HashMap < String, String > ();
-        map.put("start_date", start_date);
-        map.put("end_date", end_date);
-        map.put("email", email);
+    /*
+        Delete any hardbounce, which actually would have been blocked due to some temporary ISP failures.
+        @param {Object} data contains json objects as a key value pair from HashMap.
+        @options data {String} start_date: The start date to get report from. Date must be in YYYY-MM-DD format and should be before the end_date [Optional]
+        @options data {String} end_date: The end date to get report till date. Date must be in YYYY-MM-DD format and should be after the start_date [Optional]
+        @options data {String} email: Email address to delete its bounces [Optional]
+    */
+    public String delete_bounces(Object data) {
         Gson gson = new Gson();
-        String json = gson.toJson(map);
+        String json = gson.toJson(data);
         return post("bounces", json);
     }
 
-    public String send_transactional_template(int id, String to, String cc, String bcc, Object attr, String attachmentUrl, Object attachment) {
-        Map < String, Object > map = new HashMap < String, Object > ();
-        map.put("cc", cc);
-        map.put("to", to);
-        map.put("attr", attr);
-        map.put("bcc", bcc);
-        map.put("attachment_url", attachmentUrl);
-        map.put("attachment", attachment);
+    /*
+        Send templates created on SendinBlue, through SendinBlue SMTP (transactional mails).
+        @param {Object} data contains json objects as a key value pair from HashMap.
+        @options data {Integer} id: Id of the template created on SendinBlue account [Mandatory]
+        @options data {String} to: Email address of the recipient(s). You can use pipe ( | ) to separate multiple recipients. Example: "to-example@example.net|to2-example@example.net" [Mandatory]
+        @options data {String} cc: Same as to but for Cc [Optional]
+        @options data {String} bcc: Same as to but for Bcc [Optional]
+        @options data {Array} attr: The name of attribute present in your SendinBlue account. It should be sent as an associative array. Example: array("NAME"=>"name"). You can use commas to separate multiple attributes [Optional]
+        @options data {String} attachment_url: Provide the absolute url of the attachment. Url not allowed from local machine. File must be hosted somewhere [Optional]
+        @options data {Array} attachment: To send attachment/s generated on the fly you have to pass your attachment/s filename & its base64 encoded chunk data as an associative array [Optional]
+        @options data {Array} headers: The headers will be sent along with the mail headers in original email. Example: array("Content-Type"=>"text/html; charset=iso-8859-1"). You can use commas to separate multiple headers [Optional]
+    */
+    public String send_transactional_template(Map<String,Object> data) {
+        String id = data.get("id").toString();
         Gson gson = new Gson();
-        String json = gson.toJson(map);
+        String json = gson.toJson(data);
         return put("template/" + id, json);
     }
 
-    public String create_template(String from_name, String name, String bat_sent, String html_content, String html_url, String subject, String from_email, String reply_to, String to_field, int status, int attach) {
-        Map < String, Object > map = new HashMap < String, Object > ();
-        map.put("from_name", from_name);
-        map.put("template_name", name);
-        map.put("bat", bat_sent);
-        map.put("html_content", html_content);
-        map.put("html_url", html_url);
-        map.put("subject", subject);
-        map.put("from_email", from_email);
-        map.put("reply_to", reply_to);
-        map.put("to_field", to_field);
-        map.put("status", status);
-        map.put("attachment", attach);
+    /*
+        Create a Template.
+        @param {Object} data contains json objects as a key value pair from HashMap.
+        @options data {String} from_name: Sender name from which the campaign emails are sent [Mandatory: for Dedicated IP clients & for Shared IP clients, if sender exists]
+        @options data {String} template_name: Name of the Template [Mandatory]
+        @options data {String} bat: Email address for test mail [Optional]
+        @options data {String} html_content: Body of the content. The HTML content field must have more than 10 characters [Mandatory: if html_url is empty]
+        @options data {String} html_url Url: which content is the body of content [Mandatory: if html_content is empty]
+        @options data {String} subject: Subject of the campaign [Mandatory]
+        @options data {String} from_email: Sender email from which the campaign emails are sent [Mandatory: for Dedicated IP clients & for Shared IP clients, if sender exists]
+        @options data {String} reply_to: The reply to email in the campaign emails [Optional]
+        @options data {String} to_fieldv This is to personalize the «To» Field. If you want to include the first name and last name of your recipient, add [PRENOM] [NOM]. To use the contact attributes here, these should already exist in SendinBlue account [Optional]
+        @options data {Integer} status: Status of template. Possible values = 0 (default) & 1. status = 0 means template is inactive, & status = 1 means template is active [Optional]
+        @options data {Integer} attachment: Status of attachment. Possible values = 0 (default) & 1. attach = 0 means an attachment can’t be sent, & attach = 1 means an attachment can be sent, in the email [Optional]
+    */
+    public String create_template(Object data) {
         Gson gson = new Gson();
-        String json = gson.toJson(map);
+        String json = gson.toJson(data);
         return post("template", json);
     }
 
-    public String update_template(int id, String from_name, String name, String bat_sent, String html_content, String html_url, String subject, String from_email, String reply_to, String to_field, int status, int attach) {
-        Map < String, Object > map = new HashMap < String, Object > ();
-        map.put("from_name", from_name);
-        map.put("template_name", name);
-        map.put("bat", bat_sent);
-        map.put("html_content", html_content);
-        map.put("html_url", html_url);
-        map.put("subject", subject);
-        map.put("from_email", from_email);
-        map.put("reply_to", reply_to);
-        map.put("to_field", to_field);
-        map.put("status", status);
-        map.put("attachment", attach);
+    /*
+        Update a Template.
+        @param {Object} data contains json objects as a key value pair from HashMap.
+        @options data {Integer} id: Id of Template to be modified [Mandatory]
+        @options data {String} from_name: Sender name from which the campaign emails are sent [Mandatory: for Dedicated IP clients & for Shared IP clients, if sender exists]
+        @options data {String} template_name: Name of the Template [Mandatory]
+        @options data {String} bat: Email address for test mail [Optional]
+        @options data {String} html_content: Body of the content. The HTML content field must have more than 10 characters [Mandatory: if html_url is empty]
+        @options data {String} html_url: Url which content is the body of content [Mandatory: if html_content is empty]
+        @options data {String} subject: Subject of the campaign [Mandatory]
+        @options data {String} from_email: Sender email from which the campaign emails are sent [Mandatory: for Dedicated IP clients & for Shared IP clients, if sender exists]
+        @options data {String} reply_to: The reply to email in the campaign emails [Optional]
+        @options data {String} to_field: This is to personalize the «To» Field. If you want to include the first name and last name of your recipient, add [PRENOM] [NOM]. To use the contact attributes here, these should already exist in SendinBlue account [Optional]
+        @options data {Integer} status: Status of template. Possible values = 0 (default) & 1. status = 0 means template is inactive, & status = 1 means template is active [Optional]
+        @options data {Integer} attachment: Status of attachment. Possible values = 0 (default) & 1. attach = 0 means an attachment can’t be sent, & attach = 1 means an attachment can be sent, in the email [Optional]
+    */
+    public String update_template(Map<String,Object> data) {
+        String id = data.get("id").toString();
         Gson gson = new Gson();
-        String json = gson.toJson(map);
+        String json = gson.toJson(data);
         return put("template/" + id, json);
     }
 
-    public String get_senders(String option) {
-    	String url = "";
+    /*
+        Get Access of created senders information.
+        @param {Object} data contains json objects as a key value pair from HashMap.
+        @options data {String} option: Options to get senders. Possible options – IP-wise, & Domain-wise ( only for dedicated IP clients ). Example: to get senders with specific IP, use $option=’1.2.3.4′, to get senders with specific domain use, $option=’domain.com’, & to get all senders, use $option="" [Optional]
+    */
+    public String get_senders(Map<String,String> data) {
+        String option = data.get("option");
+        String url = "";
         if (option == "") {
-        	url = "advanced/";
+            url = "advanced/";
         } else {
-        	url = "advanced/option/"+option+"/";
+            url = "advanced/option/"+option+"/";
         }
         return get(url, "");
     }
 
-    public String create_sender(String sender_name, String sender_email, String [] ip_domain) {
-        Map < String, Object > map = new HashMap < String, Object > ();
-        map.put("name", sender_name);
-        map.put("email", sender_email);
-        map.put("ip_domain", ip_domain);
+    /*
+        Create your Senders.
+        @param {Object} data contains json objects as a key value pair from HashMap.
+        @options data {String} name: Name of the sender [Mandatory]
+        @options data {String} email: Email address of the sender [Mandatory]
+        @options data {Array} ip_domain: Pass pipe ( | ) separated Dedicated IP and its associated Domain. Example: "1.2.3.4|mydomain.com". You can use commas to separate multiple ip_domain’s [Mandatory: Only for Dedicated IP clients, for Shared IP clients, it should be kept blank]
+    */
+    public String create_sender(Object data) {
         Gson gson = new Gson();
-        String json = gson.toJson(map);
+        String json = gson.toJson(data);
         return post("advanced", json);
     }
 
-    public String update_sender(int id, String sender_name, String sender_email, String [] ip_domain) {
-        Map < String, Object > map = new HashMap < String, Object > ();
-        map.put("name", sender_name);
-        map.put("email", sender_email);
-        map.put("ip_domain", ip_domain);
+    /*
+        Update your Senders.
+        @param {Object} data contains json objects as a key value pair from HashMap.
+        @options data {Integer} id: Id of sender to be modified [Mandatory]
+        @options data {String} name: Name of the sender [Mandatory]
+        @options data {Array} ip_domain: Pass pipe ( | ) separated Dedicated IP and its associated Domain. Example: "1.2.3.4|mydomain.com". You can use commas to separate multiple ip_domain’s [Mandatory: Only for Dedicated IP clients, for Shared IP clients, it should be kept blank]
+    */
+    public String update_sender(Map<String,Object> data) {
+        String id = data.get("id").toString();
         Gson gson = new Gson();
-        String json = gson.toJson(map);
+        String json = gson.toJson(data);
         return put("advanced/" + id, json);
     }
 
-    public String delete_sender(int id) {
+    /*
+        Delete your Sender Information.
+        @param {Object} data contains json objects as a key value pair from HashMap.
+        @options data {Integer} id: Id of sender to be deleted [Mandatory]
+    */
+    public String delete_sender(Map<String,Object> data) {
+        String id = data.get("id").toString();
         return delete("advanced/" + id, "");
     }
 }
