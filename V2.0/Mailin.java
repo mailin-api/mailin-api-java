@@ -269,7 +269,7 @@ public class Mailin {
         String page = data.get("page").toString(); 
         String page_limit = data.get("page_limit").toString(); 
         String url = "";
-        if (type == "" && status == "" && page == "" && page_limit == "") {
+        if ((type != null && type.isEmpty()) && (status != null && status.isEmpty()) && (page != null && page.isEmpty()) && (page_limit != null && page_limit.isEmpty())){
             url = "campaign/detailsv2/";
         } else {
             url = "campaign/detailsv2/type/" + type + "/status/" + status + "/page/" + page + "/page_limit/" + page_limit + "/";
@@ -632,7 +632,7 @@ public class Mailin {
     public String get_webhooks(Map<String,String> data) {
         String is_plat = data.get("is_plat"); 
         String url = "";
-        if (is_plat == "") {
+        if (is_plat != null && is_plat.isEmpty()){
             url = "webhook/";
         } else {
             url = "webhook/is_plat/"+is_plat+"/";
@@ -969,7 +969,7 @@ public class Mailin {
     public String get_senders(Map<String,String> data) {
         String option = data.get("option");
         String url = "";
-        if (option == "") {
+        if (option != null && option.isEmpty()){
             url = "advanced/";
         } else {
             url = "advanced/option/"+option+"/";
