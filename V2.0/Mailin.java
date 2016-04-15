@@ -37,7 +37,7 @@ public class Mailin {
         con.setRequestMethod(method);
         con.setUseCaches(false);
 
-        if (!EMPTY_STRING.equals(input) && ! "GET".equals(method)) {
+        if (!EMPTY_STRING.equals(input) && !"GET".equals(method)) {
 
             BufferedWriter writer = null;
             DataOutputStream outStream = null;
@@ -54,15 +54,24 @@ public class Mailin {
             }
             //
             finally {
-                writer.flush();
-                writer.close();
-                outStream.close();
+                try {
+                    if (writer != null) {
+                        writer.flush();
+                        writer.close();
+                    }
+                    if (outStream != null) {
+                        outStream.close();
+                    }
+
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
         }
 
         int responseCode = con.getResponseCode();
         String inputLine;
-        StringBuffer response = new StringBuffer();
+        StringBuilder response = new StringBuilder();
         BufferedReader in = null;
 
         try {
@@ -83,7 +92,13 @@ public class Mailin {
         }
         //
         finally {
-            in.close();
+            if (in != null) {
+                try {
+                    in.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
         }
 
         return response.toString();
@@ -92,7 +107,7 @@ public class Mailin {
     public String get(String resource, String input) {
         try {
             return do_request(resource, "GET", input);
-        } catch (Exception e) {
+        } catch (Exception ignored) {
 
         }
         return null;
@@ -101,7 +116,7 @@ public class Mailin {
     public String put(String resource, String input) {
         try {
             return do_request(resource, "PUT", input);
-        } catch (Exception e) {
+        } catch (Exception ignored) {
 
         }
         return null;
@@ -110,7 +125,7 @@ public class Mailin {
     public String post(String resource, String input) {
         try {
             return do_request(resource, "POST", input);
-        } catch (Exception e) {
+        } catch (Exception ignored) {
 
         }
         return null;
@@ -119,7 +134,7 @@ public class Mailin {
     public String delete(String resource, String input) {
         try {
             return do_request(resource, "DELETE", input);
-        } catch (Exception e) {
+        } catch (Exception ignored) {
 
         }
         return null;
@@ -999,7 +1014,7 @@ public class Mailin {
     public String get_senders(Map<String, String> data) {
         String option = data.get("option");
         String url;
-        if (EMPTY_STRING.equals( option )) {
+        if (EMPTY_STRING.equals(option)) {
             url = "advanced/";
         }
         else {
