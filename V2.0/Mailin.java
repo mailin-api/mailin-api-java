@@ -1,16 +1,19 @@
-import java.io.*;
+import com.google.gson.Gson;
+
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.*;
-import javax.net.ssl.HttpsURLConnection;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
- 
+import java.util.Map;
+
+
 public class Mailin {
- 
-    private final String USER_AGENT = "Mozilla/5.0";
-    final protected static char[] hexArray = "0123456789ABCDEF".toCharArray();
-    
+
+    private static final String EMPTY_STRING = "";
     private String base_url;
     private String api_key;
 
@@ -18,53 +21,93 @@ public class Mailin {
         this.base_url = base_url;
         this.api_key = api_key;
     }
-    
-    public String do_request(String resource, String method, String input) throws Exception {
+
+    private String do_request(String resource, String method, String input) throws Exception {
         String url = base_url + "/" + resource;
         String key = api_key;
         String content_header = "application/json";
 
         URL obj = new URL(url);
         HttpURLConnection con = (HttpURLConnection) obj.openConnection();
-         
+
         con.setRequestProperty("api-key", key);
         con.setRequestProperty("Content-Type", content_header);
         con.setDoOutput(true);
         con.setDoInput(true);
         con.setRequestMethod(method);
         con.setUseCaches(false);
-        
-        if (input != "" && method != "GET") {
-            DataOutputStream outStream = new DataOutputStream(con.getOutputStream());
-            BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(outStream, "UTF-8"));
-            writer.write(input);
-            writer.flush();
-            writer.close();
-            outStream.close();
+
+        if (!EMPTY_STRING.equals(input) && !"GET".equals(method)) {
+
+            BufferedWriter writer = null;
+            DataOutputStream outStream = null;
+
+            try {
+                outStream = new DataOutputStream(con.getOutputStream());
+                writer = new BufferedWriter(new OutputStreamWriter(outStream, "UTF-8"));
+                writer.write(input);
+                writer.flush();
+            }
+            //
+            catch (IOException e) {
+                e.printStackTrace();
+            }
+            //
+            finally {
+                try {
+                    if (writer != null) {
+                        writer.flush();
+                        writer.close();
+                    }
+                    if (outStream != null) {
+                        outStream.close();
+                    }
+
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
         }
-        
+
         int responseCode = con.getResponseCode();
         String inputLine;
-        StringBuffer response = new StringBuffer();
-        BufferedReader in;
+        StringBuilder response = new StringBuilder();
+        BufferedReader in = null;
 
-        if (200 <= responseCode && responseCode < 300) {
-            in = new BufferedReader(new InputStreamReader(con.getInputStream()));
-        } else {
-            in = new BufferedReader(new InputStreamReader(con.getErrorStream()));
+        try {
+            if (200 <= responseCode && responseCode < 300) {
+                in = new BufferedReader(new InputStreamReader(con.getInputStream()));
+            }
+            else {
+                in = new BufferedReader(new InputStreamReader(con.getErrorStream()));
+            }
+
+            while ((inputLine = in.readLine()) != null) {
+                response.append(inputLine);
+            }
+        }
+        //
+        catch (IOException e) {
+            e.printStackTrace();
+        }
+        //
+        finally {
+            if (in != null) {
+                try {
+                    in.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
         }
 
-        while ((inputLine = in.readLine()) != null) {
-            response.append(inputLine);
-        }
-        in.close();
         return response.toString();
     }
 
     public String get(String resource, String input) {
         try {
             return do_request(resource, "GET", input);
-        } catch (Exception e) {
+        } catch (Exception ignored) {
 
         }
         return null;
@@ -73,7 +116,7 @@ public class Mailin {
     public String put(String resource, String input) {
         try {
             return do_request(resource, "PUT", input);
-        } catch (Exception e) {
+        } catch (Exception ignored) {
 
         }
         return null;
@@ -82,7 +125,7 @@ public class Mailin {
     public String post(String resource, String input) {
         try {
             return do_request(resource, "POST", input);
-        } catch (Exception e) {
+        } catch (Exception ignored) {
 
         }
         return null;
@@ -91,7 +134,7 @@ public class Mailin {
     public String delete(String resource, String input) {
         try {
             return do_request(resource, "DELETE", input);
-        } catch (Exception e) {
+        } catch (Exception ignored) {
 
         }
         return null;
@@ -102,7 +145,7 @@ public class Mailin {
         No input required
     */
     public String get_account() {
-        return get("account", "");
+        return get("account", EMPTY_STRING);
     }
 
     /*
@@ -110,7 +153,7 @@ public class Mailin {
         No input required
     */
     public String get_smtp_details() {
-        return get("account/smtpdetail", "");
+        return get("account/smtpdetail", EMPTY_STRING);
     }
 
     /*
@@ -154,9 +197,9 @@ public class Mailin {
         @param {Object} data contains json objects as a key value pair from HashMap.
         @options data {String} auth_key: 16 character authorization key of Reseller child to be deleted [Mandatory]
     */
-    public String delete_child_account(Map<String,String> data) {
-        String child_authkey = data.get("auth_key"); 
-        return delete("account/" + child_authkey, "");
+    public String delete_child_account(Map<String, String> data) {
+        String child_authkey = data.get("auth_key");
+        return delete("account/" + child_authkey, EMPTY_STRING);
     }
 
     /*
@@ -234,7 +277,7 @@ public class Mailin {
         @options data {String} scheduled_date: The day on which the SMS campaign is supposed to run [Optional]
         @options data {Integer} send_now: Flag to send campaign now. Possible values = 0 (default) & 1. send_now = 0 means campaign can’t be send now, & send_now = 1 means campaign ready to send now [Optional]
     */
-    public String update_sms_campaign(Map<String,Object> data) {
+    public String update_sms_campaign(Map<String, Object> data) {
         String id = data.get("id").toString();
         Gson gson = new Gson();
         String json = gson.toJson(data);
@@ -247,12 +290,12 @@ public class Mailin {
         @options data {Integer} id: Id of the SMS campaign [Mandatory]
         @options data {String} to: Mobile number with the country code to send test SMS. The mobile number defined here should belong to one of your contacts in SendinBlue account and should not be blacklisted [Mandatory]
     */
-    public String send_bat_sms(Map<String,Object> data) {
-        String id = data.get("id").toString(); 
+    public String send_bat_sms(Map<String, Object> data) {
+        String id = data.get("id").toString();
         String to = data.get("to").toString();
         Gson gson = new Gson();
         String json = gson.toJson(data);
-        return get("sms/" + id +"/" + to, "");
+        return get("sms/" + id + "/" + to, EMPTY_STRING);
     }
 
     /*
@@ -263,28 +306,30 @@ public class Mailin {
         @options data {Integer} page: Maximum number of records per request is 500, if there are more than 500 campaigns then you can use this parameter to get next 500 results [Optional]
         @options data {Integer} page_limit: This should be a valid number between 1-1000. If page limit is kept empty or >1000, default is 500 [Optional]
     */
-    public String get_campaigns_v2(Map<String,Object> data) {
-        String type = data.get("type").toString();  
-        String status = data.get("status").toString();  
-        String page = data.get("page").toString(); 
-        String page_limit = data.get("page_limit").toString(); 
-        String url = "";
-        if ((type != null && type.isEmpty()) && (status != null && status.isEmpty()) && (page != null && page.isEmpty()) && (page_limit != null && page_limit.isEmpty())){
+    public String get_campaigns_v2(Map<String, Object> data) {
+        String type = data.get("type").toString();
+        String status = data.get("status").toString();
+        String page = data.get("page").toString();
+        String page_limit = data.get("page_limit").toString();
+        String url;
+
+        if (EMPTY_STRING.equals(type) && EMPTY_STRING.equals(status) && EMPTY_STRING.equals(page) && EMPTY_STRING.equals(page_limit)) {
             url = "campaign/detailsv2/";
-        } else {
+        }
+        else {
             url = "campaign/detailsv2/type/" + type + "/status/" + status + "/page/" + page + "/page_limit/" + page_limit + "/";
         }
-        return get(url,"");
+        return get(url, EMPTY_STRING);
     }
 
-    /*  
+    /*
         Get a particular campaign detail.
         @param {Object} data contains json objects as a key value pair from HashMap.
         @options data {Integer} id: Unique Id of the campaign [Mandatory]
     */
-    public String get_campaign_v2(Map<String,Object> data) {
+    public String get_campaign_v2(Map<String, Object> data) {
         String id = data.get("id").toString();
-        return get("campaign/" + id + "/detailsv2/", "");
+        return get("campaign/" + id + "/detailsv2/", EMPTY_STRING);
     }
 
     /*
@@ -307,7 +352,6 @@ public class Mailin {
         @options data {Integer} inline_image: Status of inline image. Possible values = 0 (default) & 1. inline_image = 0 means image can’t be embedded, & inline_image = 1 means image can be embedded, in the email [Optional]
         @options data {Integer} mirror_active: Status of mirror links in campaign. Possible values = 0 & 1 (default). mirror_active = 0 means mirror links are deactivated, & mirror_active = 1 means mirror links are activated, in the campaign [Optional]
         @options data {Integer} send_now: Flag to send campaign now. Possible values = 0 (default) & 1. send_now = 0 means campaign can’t be send now, & send_now = 1 means campaign ready to send now [Optional]
-
     */
     public String create_campaign(Object data) {
         Gson gson = new Gson();
@@ -337,7 +381,7 @@ public class Mailin {
         @options data {Integer} mirror_active: Status of mirror links in campaign. Possible values = 0 & 1 (default). mirror_active = 0 means mirror links are deactivated, & mirror_active = 1 means mirror links are activated, in the campaign [Optional]
         @options data {Integer} send_now: Flag to send campaign now. Possible values = 0 (default) & 1. send_now = 0 means campaign can’t be send now, & send_now = 1 means campaign ready to send now [Optional]
     */
-    public String update_campaign(Map<String,Object> data) {
+    public String update_campaign(Map<String, Object> data) {
         String id = data.get("id").toString();
         Gson gson = new Gson();
         String json = gson.toJson(data);
@@ -349,9 +393,9 @@ public class Mailin {
         @param {Object} data contains json objects as a key value pair from HashMap.
         @options data {Integer} id: Id of campaign to be deleted [Mandatory]
     */
-    public String delete_campaign(Map<String,Object> data) {
+    public String delete_campaign(Map<String, Object> data) {
         String id = data.get("id").toString();
-        return delete("campaign/" + id, "");
+        return delete("campaign/" + id, EMPTY_STRING);
     }
 
     /*
@@ -366,7 +410,7 @@ public class Mailin {
         @options data {Array} email_cc: Same as email_to but for Cc [Optional]
         @options data {String} email_body: Body of the message [Mandatory]
     */
-    public String campaign_report_email(Map<String,Object> data) {
+    public String campaign_report_email(Map<String, Object> data) {
         String id = data.get("id").toString();
         Gson gson = new Gson();
         String json = gson.toJson(data);
@@ -380,7 +424,7 @@ public class Mailin {
         @options data {String} notify_url: URL that will be called once the export process is finished [Mandatory]
         @options data {String} type: Type of recipients. Possible values – all, non_clicker, non_opener, clicker, opener, soft_bounces, hard_bounces & unsubscribes [Mandatory]
     */
-    public String campaign_recipients_export(Map<String,Object> data) {
+    public String campaign_recipients_export(Map<String, Object> data) {
         String id = data.get("id").toString();
         Gson gson = new Gson();
         String json = gson.toJson(data);
@@ -393,7 +437,7 @@ public class Mailin {
         @options data {Integer} id: Id of the campaign [Mandatory]
         @options data {Array} emails: Email address of recipient(s) existing in the one of the lists & should not be blacklisted. Example: "test@example.net". You can use commas to separate multiple recipients [Mandatory]
     */
-    public String send_bat_email(Map<String,Object> data) {
+    public String send_bat_email(Map<String, Object> data) {
         String id = data.get("id").toString();
         Gson gson = new Gson();
         String json = gson.toJson(data);
@@ -451,7 +495,7 @@ public class Mailin {
         @options data {Integer} mirror_active: Status of mirror links in campaign. Possible values = 0 & 1 (default). mirror_active = 0 means mirror links are deactivated, & mirror_active = 1 means mirror links are activated, in the campaign [Optional]
         @options data {Integer} send_now: Flag to send campaign now. Possible values = 0 (default) & 1. send_now = 0 means campaign can’t be send now, & send_now = 1 means campaign ready to send now [Optional]
     */
-    public String update_trigger_campaign(Map<String,Object> data) {
+    public String update_trigger_campaign(Map<String, Object> data) {
         String id = data.get("id").toString();
         Gson gson = new Gson();
         String json = gson.toJson(data);
@@ -475,7 +519,7 @@ public class Mailin {
         @options data {Integer} id: Id of campaign to update its status [Mandatory]
         @options data {String} status: Types of status. Possible values – suspended, archive, darchive, sent, queued, replicate and replicate_template ( case sensitive ) [Mandatory]
     */
-    public String update_campaign_status(Map<String,Object> data) {
+    public String update_campaign_status(Map<String, Object> data) {
         String id = data.get("id").toString();
         Gson gson = new Gson();
         String json = gson.toJson(data);
@@ -499,9 +543,9 @@ public class Mailin {
         @param {Object} data contains json objects as a key value pair from HashMap.
         @options data {Integer} id: Id of process to get details [Mandatory]
     */
-    public String get_process(Map<String,Object> data) {
+    public String get_process(Map<String, Object> data) {
         String id = data.get("id").toString();
-        return get("process/" + id, "");
+        return get("process/" + id, EMPTY_STRING);
     }
 
     /*
@@ -522,9 +566,9 @@ public class Mailin {
         @param {Object} data contains json objects as a key value pair from HashMap.
         @options data {Integer} id: Id of list to get details [Mandatory]
     */
-    public String get_list(Map<String,Object> data) {
+    public String get_list(Map<String, Object> data) {
         String id = data.get("id").toString();
-        return get("list/" + id, "");
+        return get("list/" + id, EMPTY_STRING);
     }
 
     /*
@@ -544,9 +588,9 @@ public class Mailin {
         @param {Object} data contains json objects as a key value pair from HashMap.
         @options data {Integer} id: Id of list to be deleted [Mandatory]
     */
-    public String delete_list(Map<String,Object> data) {
+    public String delete_list(Map<String, Object> data) {
         String id = data.get("id").toString();
-        return delete("list/" + id, "");
+        return delete("list/" + id, EMPTY_STRING);
     }
 
     /*
@@ -556,7 +600,7 @@ public class Mailin {
         @options data {String} list_name: Desired name of the list to be modified [Optional]
         @options data {Integer} list_parent: Folder ID [Mandatory]
     */
-    public String update_list(Map<String,Object> data) {
+    public String update_list(Map<String, Object> data) {
         String id = data.get("id").toString();
         Gson gson = new Gson();
         String json = gson.toJson(data);
@@ -583,7 +627,7 @@ public class Mailin {
         @options data {Integer} id: Id of list to link users in it [Mandatory]
         @options data {Array} users: Email address of the already existing user(s) in the SendinBlue contacts. Example: "test@example.net". You can use commas to separate multiple users [Mandatory]
     */
-    public String add_users_list(Map<String,Object> data) {
+    public String add_users_list(Map<String, Object> data) {
         String id = data.get("id").toString();
         Gson gson = new Gson();
         String json = gson.toJson(data);
@@ -596,7 +640,7 @@ public class Mailin {
         @options data {Integer} id: Id of list to unlink users from it [Mandatory]
         @options data {Array} users: Email address of the already existing user(s) in the SendinBlue contacts to be modified. Example: "test@example.net". You can use commas to separate multiple users [Mandatory]
     */
-    public String delete_users_list(Map<String,Object> data) {
+    public String delete_users_list(Map<String, Object> data) {
         String id = data.get("id").toString();
         Gson gson = new Gson();
         String json = gson.toJson(data);
@@ -629,15 +673,16 @@ public class Mailin {
         @param {Object} data contains json objects as a key value pair from HashMap.
         @options data {String} is_plat: Flag to get webhooks. Possible values – 0 & 1. Example: to get Transactional webhooks, use $is_plat=0, to get Marketing webhooks, use $is_plat=1, & to get all webhooks, use $is_plat="" [Optional]
     */
-    public String get_webhooks(Map<String,String> data) {
-        String is_plat = data.get("is_plat"); 
-        String url = "";
-        if (is_plat != null && is_plat.isEmpty()){
+    public String get_webhooks(Map<String, String> data) {
+        String is_plat = data.get("is_plat");
+        String url;
+        if (EMPTY_STRING.equals(is_plat)) {
             url = "webhook/";
-        } else {
-            url = "webhook/is_plat/"+is_plat+"/";
         }
-        return get(url, "");
+        else {
+            url = "webhook/is_plat/" + is_plat + "/";
+        }
+        return get(url, EMPTY_STRING);
     }
 
     /*
@@ -645,9 +690,9 @@ public class Mailin {
         @param {Object} data contains json objects as a key value pair from HashMap.
         @options data {Integer} id: Id of webhook to get details [Mandatory]
     */
-    public String get_webhook(Map<String,Object> data) {
+    public String get_webhook(Map<String, Object> data) {
         String id = data.get("id").toString();
-        return get("webhook/" + id, "");
+        return get("webhook/" + id, EMPTY_STRING);
     }
 
     /*
@@ -669,9 +714,9 @@ public class Mailin {
         @param {Object} data contains json objects as a key value pair from HashMap.
         @options data {Integer} id: Id of webhook to be deleted [Mandatory]
     */
-    public String delete_webhook(Map<String,Object> data) {
+    public String delete_webhook(Map<String, Object> data) {
         String id = data.get("id").toString();
-        return delete("webhook/" + id + "/", "");
+        return delete("webhook/" + id + "/", EMPTY_STRING);
     }
 
     /*
@@ -682,7 +727,7 @@ public class Mailin {
         @options data {String} description: Webook description [Optional]
         @options data {Array} events: Set of events. You can use commas to separate multiple events. Possible values for Transcational webhook – request, delivered, hard_bounce, soft_bounce, blocked, spam, invalid_email, deferred, click, & opened and Possible Values for Marketing webhook – spam, opened, click, hard_bounce, unsubscribe, soft_bounce & list_addition ( case sensitive ) [Mandatory]
     */
-    public String update_webhook(Map<String,Object> data) {
+    public String update_webhook(Map<String, Object> data) {
         String id = data.get("id").toString();
         Gson gson = new Gson();
         String json = gson.toJson(data);
@@ -725,9 +770,9 @@ public class Mailin {
         @param {Object} data contains json objects as a key value pair from HashMap.
         @options data {String} email: Email address of the already existing user in the SendinBlue contacts [Mandatory]
     */
-    public String get_user(Map<String,String> data) {
-        String id = data.get("email"); 
-        return get("user/" + id, "");
+    public String get_user(Map<String, String> data) {
+        String id = data.get("email");
+        return get("user/" + id, EMPTY_STRING);
     }
 
     /*
@@ -735,9 +780,9 @@ public class Mailin {
         @param {Object} data contains json objects as a key value pair from HashMap.
         @options data {String} email: Email address of the already existing user in the SendinBlue contacts to be unlinked from all lists [Mandatory]
     */
-    public String delete_user(Map<String,String> data) {
-        String id = data.get("email"); 
-        return delete("user/" + id, "");
+    public String delete_user(Map<String, String> data) {
+        String id = data.get("email");
+        return delete("user/" + id, EMPTY_STRING);
     }
 
     /*
@@ -774,7 +819,7 @@ public class Mailin {
         No input required
     */
     public String get_attributes() {
-        return get("attribute", "");
+        return get("attribute", EMPTY_STRING);
     }
 
     /*
@@ -782,9 +827,9 @@ public class Mailin {
         @param {Object} data contains json objects as a key value pair from HashMap.
         @options data {String} type: Type of attribute. Possible values – normal, transactional, category, calculated & global [Optional]
     */
-    public String get_attribute(Map<String,String> data) {
+    public String get_attribute(Map<String, String> data) {
         String type = data.get("type");
-        return get("attribute/" + type, "");
+        return get("attribute/" + type, EMPTY_STRING);
     }
 
     /*
@@ -805,7 +850,7 @@ public class Mailin {
         @param {Object} data contains json objects as a key value pair from HashMap.
         @options data {Integer} type: Type of attribute to be deleted [Mandatory]
     */
-    public String delete_attribute(Map<String,Object> data) {
+    public String delete_attribute(Map<String, Object> data) {
         String type = data.get("type").toString();
         Gson gson = new Gson();
         String json = gson.toJson(data);
@@ -846,9 +891,9 @@ public class Mailin {
         @param {Object} data contains json objects as a key value pair from HashMap.
         @options data {Integer} id: Id of folder to get details [Mandatory]
     */
-    public String get_folder(Map<String,Object> data) {
+    public String get_folder(Map<String, Object> data) {
         String id = data.get("id").toString();
-        return get("folder/" + id, "");
+        return get("folder/" + id, EMPTY_STRING);
     }
 
     /*
@@ -867,9 +912,9 @@ public class Mailin {
         @param {Object} data contains json objects as a key value pair from HashMap.
         @options data {Integer} id: Id of folder to be deleted [Mandatory]
     */
-    public String delete_folder(Map<String,Object> data) {
+    public String delete_folder(Map<String, Object> data) {
         String id = data.get("id").toString();
-        return delete("folder/" + id, "");
+        return delete("folder/" + id, EMPTY_STRING);
     }
 
     /*
@@ -878,7 +923,7 @@ public class Mailin {
         @options data {Integer} id: Id of folder to be modified [Mandatory]
         @options data {String} name: Desired name of the folder to be modified [Mandatory]
     */
-    public String update_folder(Map<String,Object> data) {
+    public String update_folder(Map<String, Object> data) {
         String id = data.get("id").toString();
         Gson gson = new Gson();
         String json = gson.toJson(data);
@@ -910,7 +955,7 @@ public class Mailin {
         @options data {Array} attachment: To send attachment/s generated on the fly you have to pass your attachment/s filename & its base64 encoded chunk data as an associative array [Optional]
         @options data {Array} headers: The headers will be sent along with the mail headers in original email. Example: array("Content-Type"=>"text/html; charset=iso-8859-1"). You can use commas to separate multiple headers [Optional]
     */
-    public String send_transactional_template(Map<String,Object> data) {
+    public String send_transactional_template(Map<String, Object> data) {
         String id = data.get("id").toString();
         Gson gson = new Gson();
         String json = gson.toJson(data);
@@ -954,7 +999,7 @@ public class Mailin {
         @options data {Integer} status: Status of template. Possible values = 0 (default) & 1. status = 0 means template is inactive, & status = 1 means template is active [Optional]
         @options data {Integer} attachment: Status of attachment. Possible values = 0 (default) & 1. attach = 0 means an attachment can’t be sent, & attach = 1 means an attachment can be sent, in the email [Optional]
     */
-    public String update_template(Map<String,Object> data) {
+    public String update_template(Map<String, Object> data) {
         String id = data.get("id").toString();
         Gson gson = new Gson();
         String json = gson.toJson(data);
@@ -966,15 +1011,16 @@ public class Mailin {
         @param {Object} data contains json objects as a key value pair from HashMap.
         @options data {String} option: Options to get senders. Possible options – IP-wise, & Domain-wise ( only for dedicated IP clients ). Example: to get senders with specific IP, use $option=’1.2.3.4′, to get senders with specific domain use, $option=’domain.com’, & to get all senders, use $option="" [Optional]
     */
-    public String get_senders(Map<String,String> data) {
+    public String get_senders(Map<String, String> data) {
         String option = data.get("option");
-        String url = "";
-        if (option != null && option.isEmpty()){
+        String url;
+        if (EMPTY_STRING.equals(option)) {
             url = "advanced/";
-        } else {
-            url = "advanced/option/"+option+"/";
         }
-        return get(url, "");
+        else {
+            url = "advanced/option/" + option + "/";
+        }
+        return get(url, EMPTY_STRING);
     }
 
     /*
@@ -997,7 +1043,7 @@ public class Mailin {
         @options data {String} name: Name of the sender [Mandatory]
         @options data {Array} ip_domain: Pass pipe ( | ) separated Dedicated IP and its associated Domain. Example: "1.2.3.4|mydomain.com". You can use commas to separate multiple ip_domain’s [Mandatory: Only for Dedicated IP clients, for Shared IP clients, it should be kept blank]
     */
-    public String update_sender(Map<String,Object> data) {
+    public String update_sender(Map<String, Object> data) {
         String id = data.get("id").toString();
         Gson gson = new Gson();
         String json = gson.toJson(data);
@@ -1009,8 +1055,8 @@ public class Mailin {
         @param {Object} data contains json objects as a key value pair from HashMap.
         @options data {Integer} id: Id of sender to be deleted [Mandatory]
     */
-    public String delete_sender(Map<String,Object> data) {
+    public String delete_sender(Map<String, Object> data) {
         String id = data.get("id").toString();
-        return delete("advanced/" + id, "");
+        return delete("advanced/" + id, EMPTY_STRING);
     }
 }
