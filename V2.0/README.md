@@ -7,12 +7,14 @@ This is the official SendinBlue Java API wrapper. You will need to install the f
 
 1. You will need to first get the Access key from [SendinBlue](https://www.sendinblue.com).
 
-2. Assuming that you have cloned this git repo. You can use this small sample script to get started
+2. Our library supports a timeout value, default is 30,000 MS ( 30 Secs ), which you can pass as 3rd parameter in Mailin class Object.
+
+3. Assuming that you have cloned this git repo. You can use this small sample script to get started
 ```java
 import java.util.*;
 public class JavaAPI {
 	public static void main(String[] args) {
-		Mailin http = new Mailin("https://api.sendinblue.com/v2.0","<your access key>"); 
+		Mailin http = new Mailin("https://api.sendinblue.com/v2.0","<your access key>",5000);	#Optional parameter: Timeout in MS
 
 		Map < String, String > data = new HashMap < String, String > ();
 			data.put("type", "classic");
@@ -25,7 +27,7 @@ public class JavaAPI {
 	}
 }
 ```
-3. To explore more, you should visit the [SendinBlue API documentation](https://apidocs.sendinblue.com).
+4. To explore more, you should visit the [SendinBlue API documentation](https://apidocs.sendinblue.com).
 
 ## Available functions
 

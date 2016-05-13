@@ -16,22 +16,41 @@ public class Mailin {
     private static final String EMPTY_STRING = "";
     private String base_url;
     private String api_key;
+    private int timeout;
 
     public Mailin(String base_url, String api_key) {
         this.base_url = base_url;
         this.api_key = api_key;
+        this.timeout = 30000; //default timeout: 30 secs
+    }
+
+    public Mailin(String base_url, String api_key, int timeout) {
+        this.base_url = base_url;
+        this.api_key = api_key;
+        this.timeout = timeout;
     }
 
     private String do_request(String resource, String method, String input) throws Exception {
         String url = base_url + "/" + resource;
         String key = api_key;
+        Integer req_timeout = timeout;
         String content_header = "application/json";
 
         URL obj = new URL(url);
         HttpURLConnection con = (HttpURLConnection) obj.openConnection();
 
+        try{
+            if (req_timeout != null && (req_timeout <= 0 || req_timeout > 60000)) {
+                throw new Exception("value not allowed for timeout");
+            }       
+        } catch (Exception e){
+            e.printStackTrace();
+            return "";
+        }
+
         con.setRequestProperty("api-key", key);
         con.setRequestProperty("Content-Type", content_header);
+        con.setReadTimeout(req_timeout);
         con.setDoOutput(true);
         con.setDoInput(true);
         con.setRequestMethod(method);
