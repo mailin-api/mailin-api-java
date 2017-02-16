@@ -17,6 +17,9 @@ The following guides give you a start and understanding of how to use our API.
  * [Send transactional emails](https://apidocs.sendinblue.com/tutorial-sending-transactional-email/)
  * [Setup your webhooks](https://apidocs.sendinblue.com/how-to-setup-webhooks/)
 
+### Note
+We also support Mvn package for API V2.0.
+You can download it [here](http://search.maven.org/#search|ga|1|g:"com.sendinblue")
 
 ## Support and Feedback
 
