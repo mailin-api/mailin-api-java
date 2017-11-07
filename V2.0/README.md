@@ -14,7 +14,7 @@ This is the official SendinBlue Java API wrapper. You will need to install the f
 import java.util.*;
 public class JavaAPI {
 	public static void main(String[] args) {
-		Mailin http = new Mailin("https://api.sendinblue.com/v2.0","<your access key>",5000);	//Optional parameter: Timeout in MS
+		Sendinblue http = new Sendinblue("https://api.sendinblue.com/v2.0","<your access key>",5000);	//Optional parameter: Timeout in MS
 
 		Map < String, String > data = new HashMap < String, String > ();
 			data.put("type", "classic");
