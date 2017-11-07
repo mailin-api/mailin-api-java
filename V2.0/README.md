@@ -12,6 +12,7 @@ This is the official SendinBlue Java API wrapper. You will need to install the f
 3. Assuming that you have cloned this git repo. You can use this small sample script to get started
 ```java
 import java.util.*;
+import com.sendinblue.Sendinblue;
 public class JavaAPI {
 	public static void main(String[] args) {
 		Sendinblue http = new Sendinblue("https://api.sendinblue.com/v2.0","<your access key>",5000);	//Optional parameter: Timeout in MS
